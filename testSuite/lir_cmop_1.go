@@ -2,19 +2,7 @@ package testSuite
 
 import (
 	"math"
-	"os"
-	"strconv"
 )
-
-var a float64
-var b float64
-
-func init() {
-	var tmpA = os.Getenv("LIR_CMOP_1_A")
-	a, _ = strconv.ParseFloat(tmpA, 64)
-	var tmpB = os.Getenv("LIR_CMOP_1_B")
-	b, _ = strconv.ParseFloat(tmpB, 64)
-}
 
 func cmop1F1(x []float64) float64 {
 	return x[0] + cmop1G1(x)
@@ -41,11 +29,11 @@ func cmop1G2(x []float64) float64 {
 }
 
 func cmop1C1(x []float64) bool {
-	return (a-cmop1G1(x))*(cmop1G1(x)-b) >= 0
+	return (0.51-cmop1G1(x))*(cmop1G1(x)-0.5) >= 0
 }
 
 func cmop1C2(x []float64) bool {
-	return (a-cmop1G2(x))*(cmop1G2(x)-b) >= 0
+	return (0.51-cmop1G2(x))*(cmop1G2(x)-0.5) >= 0
 }
 
 func Cmop1(x []float64) Fitness {
