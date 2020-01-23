@@ -12,8 +12,8 @@ func constraint2(x []float64) bool {
 
 func constraint3(x, p, q, a, b []float64, k int, f1, f2 float64) bool {
 	d := -0.25 * math.Pi
-	z := math.Pow((f1-p[k])*math.Cos(d)-(f2-q[k])*math.Sin(d), 2) / math.Pow(a[k], 2)
-	y := math.Pow((f1-p[k])*math.Sin(d)+(f2-q[k])*math.Cos(d), 2) / math.Pow(b[k], 2)
+	z := math.Pow(((f1-p[k])*math.Cos(d)-(f2-q[k])*math.Sin(d))/a[k], 2)
+	y := math.Pow(((f1-p[k])*math.Sin(d)+(f2-q[k])*math.Cos(d))/b[k], 2)
 	return z+y >= 0.1
 }
 

@@ -11,7 +11,7 @@ func objective2(x []float64) float64 {
 }
 
 func objective3(x []float64) float64 {
-	return math.Sqrt(x[0]) + inner2(x)
+	return 1 - math.Sqrt(x[0]) + inner2(x)
 }
 
 func objective4(x []float64) float64 {
@@ -47,5 +47,5 @@ func objective11(x []float64) float64 {
 }
 
 func objective12(x []float64) float64 {
-	return (1.7057 + inner5(x)) * math.Cos(0.5*math.Pi*x[0])
+	return (1.7057 + inner5(x)) * math.Sin(0.5*math.Pi*x[0])
 }
