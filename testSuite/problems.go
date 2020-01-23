@@ -4,28 +4,28 @@ import "math"
 
 func CMOP1(x []float64) Fitness {
 	fitness := Fitness{}
-	fitness.HardConstraints = make(map[string]bool)
+	fitness.InequalityConstraints = make(map[string]bool)
 	fitness.Objectives = make(map[string]float64)
 
 	fitness.Objectives["F1"] = objective1(x)
 	fitness.Objectives["F2"] = objective2(x)
 
-	fitness.HardConstraints["C1"] = constraint1(x, inner1)
-	fitness.HardConstraints["C2"] = constraint1(x, inner2)
+	fitness.InequalityConstraints["C1"] = constraint1(x, inner1)
+	fitness.InequalityConstraints["C2"] = constraint1(x, inner2)
 
 	return fitness
 }
 
 func CMOP2(x []float64) Fitness {
 	fitness := Fitness{}
-	fitness.HardConstraints = make(map[string]bool)
+	fitness.InequalityConstraints = make(map[string]bool)
 	fitness.Objectives = make(map[string]float64)
 
 	fitness.Objectives["F1"] = objective1(x)
 	fitness.Objectives["F2"] = objective3(x)
 
-	fitness.HardConstraints["C1"] = constraint1(x, inner1)
-	fitness.HardConstraints["C2"] = constraint1(x, inner2)
+	fitness.InequalityConstraints["C1"] = constraint1(x, inner1)
+	fitness.InequalityConstraints["C2"] = constraint1(x, inner2)
 
 	return fitness
 }
@@ -33,7 +33,7 @@ func CMOP2(x []float64) Fitness {
 func CMOP3(x []float64) Fitness {
 	fitness := CMOP1(x)
 
-	fitness.HardConstraints["C3"] = constraint2(x)
+	fitness.InequalityConstraints["C3"] = constraint2(x)
 
 	return fitness
 }
@@ -41,7 +41,7 @@ func CMOP3(x []float64) Fitness {
 func CMOP4(x []float64) Fitness {
 	fitness := CMOP2(x)
 
-	fitness.HardConstraints["C3"] = constraint2(x)
+	fitness.InequalityConstraints["C3"] = constraint2(x)
 
 	return fitness
 }
@@ -49,7 +49,7 @@ func CMOP4(x []float64) Fitness {
 func CMOP5(x []float64) Fitness {
 	fitness := Fitness{}
 
-	fitness.HardConstraints = make(map[string]bool)
+	fitness.InequalityConstraints = make(map[string]bool)
 	fitness.Objectives = make(map[string]float64)
 
 	fitness.Objectives["F1"] = objective4(x)
@@ -60,8 +60,8 @@ func CMOP5(x []float64) Fitness {
 	a := []float64{2, 2}
 	b := []float64{4, 8}
 
-	fitness.HardConstraints["C1"] = constraint3(x, p, q, a, b, 0, fitness.Objectives["F1"], fitness.Objectives["F2"])
-	fitness.HardConstraints["C2"] = constraint3(x, p, q, a, b, 1, fitness.Objectives["F1"], fitness.Objectives["F2"])
+	fitness.InequalityConstraints["C1"] = constraint3(x, p, q, a, b, 0, fitness.Objectives["F1"], fitness.Objectives["F2"])
+	fitness.InequalityConstraints["C2"] = constraint3(x, p, q, a, b, 1, fitness.Objectives["F1"], fitness.Objectives["F2"])
 
 	return fitness
 }
@@ -69,7 +69,7 @@ func CMOP5(x []float64) Fitness {
 func CMOP6(x []float64) Fitness {
 	fitness := Fitness{}
 
-	fitness.HardConstraints = make(map[string]bool)
+	fitness.InequalityConstraints = make(map[string]bool)
 	fitness.Objectives = make(map[string]float64)
 
 	fitness.Objectives["F1"] = objective4(x)
@@ -80,8 +80,8 @@ func CMOP6(x []float64) Fitness {
 	a := []float64{2, 2}
 	b := []float64{8, 8}
 
-	fitness.HardConstraints["C1"] = constraint3(x, p, q, a, b, 0, fitness.Objectives["F1"], fitness.Objectives["F2"])
-	fitness.HardConstraints["C2"] = constraint3(x, p, q, a, b, 1, fitness.Objectives["F1"], fitness.Objectives["F2"])
+	fitness.InequalityConstraints["C1"] = constraint3(x, p, q, a, b, 0, fitness.Objectives["F1"], fitness.Objectives["F2"])
+	fitness.InequalityConstraints["C2"] = constraint3(x, p, q, a, b, 1, fitness.Objectives["F1"], fitness.Objectives["F2"])
 
 	return fitness
 }
@@ -89,7 +89,7 @@ func CMOP6(x []float64) Fitness {
 func CMOP7(x []float64) Fitness {
 	fitness := Fitness{}
 
-	fitness.HardConstraints = make(map[string]bool)
+	fitness.InequalityConstraints = make(map[string]bool)
 	fitness.Objectives = make(map[string]float64)
 
 	fitness.Objectives["F1"] = objective4(x)
@@ -100,9 +100,9 @@ func CMOP7(x []float64) Fitness {
 	a := []float64{2, 2.5, 2.5}
 	b := []float64{6, 12, 10}
 
-	fitness.HardConstraints["C1"] = constraint3(x, p, q, a, b, 0, fitness.Objectives["F1"], fitness.Objectives["F2"])
-	fitness.HardConstraints["C2"] = constraint3(x, p, q, a, b, 1, fitness.Objectives["F1"], fitness.Objectives["F2"])
-	fitness.HardConstraints["C3"] = constraint3(x, p, q, a, b, 2, fitness.Objectives["F1"], fitness.Objectives["F2"])
+	fitness.InequalityConstraints["C1"] = constraint3(x, p, q, a, b, 0, fitness.Objectives["F1"], fitness.Objectives["F2"])
+	fitness.InequalityConstraints["C2"] = constraint3(x, p, q, a, b, 1, fitness.Objectives["F1"], fitness.Objectives["F2"])
+	fitness.InequalityConstraints["C3"] = constraint3(x, p, q, a, b, 2, fitness.Objectives["F1"], fitness.Objectives["F2"])
 
 	return fitness
 }
@@ -110,7 +110,7 @@ func CMOP7(x []float64) Fitness {
 func CMOP8(x []float64) Fitness {
 	fitness := Fitness{}
 
-	fitness.HardConstraints = make(map[string]bool)
+	fitness.InequalityConstraints = make(map[string]bool)
 	fitness.Objectives = make(map[string]float64)
 
 	fitness.Objectives["F1"] = objective4(x)
@@ -121,9 +121,9 @@ func CMOP8(x []float64) Fitness {
 	a := []float64{2, 2.5, 2.5}
 	b := []float64{6, 12, 10}
 
-	fitness.HardConstraints["C1"] = constraint3(x, p, q, a, b, 0, fitness.Objectives["F1"], fitness.Objectives["F2"])
-	fitness.HardConstraints["C2"] = constraint3(x, p, q, a, b, 1, fitness.Objectives["F1"], fitness.Objectives["F2"])
-	fitness.HardConstraints["C3"] = constraint3(x, p, q, a, b, 2, fitness.Objectives["F1"], fitness.Objectives["F2"])
+	fitness.InequalityConstraints["C1"] = constraint3(x, p, q, a, b, 0, fitness.Objectives["F1"], fitness.Objectives["F2"])
+	fitness.InequalityConstraints["C2"] = constraint3(x, p, q, a, b, 1, fitness.Objectives["F1"], fitness.Objectives["F2"])
+	fitness.InequalityConstraints["C3"] = constraint3(x, p, q, a, b, 2, fitness.Objectives["F1"], fitness.Objectives["F2"])
 
 	return fitness
 }
@@ -131,7 +131,7 @@ func CMOP8(x []float64) Fitness {
 func CMOP9(x []float64) Fitness {
 	fitness := Fitness{}
 
-	fitness.HardConstraints = make(map[string]bool)
+	fitness.InequalityConstraints = make(map[string]bool)
 	fitness.Objectives = make(map[string]float64)
 
 	fitness.Objectives["F1"] = objective7(x)
@@ -142,8 +142,8 @@ func CMOP9(x []float64) Fitness {
 	a := []float64{1.5}
 	b := []float64{6.0}
 
-	fitness.HardConstraints["C1"] = constraint3(x, p, q, a, b, 0, fitness.Objectives["F1"], fitness.Objectives["F2"])
-	fitness.HardConstraints["C2"] = constraint4(x, fitness.Objectives["F1"], fitness.Objectives["F2"], 2)
+	fitness.InequalityConstraints["C1"] = constraint3(x, p, q, a, b, 0, fitness.Objectives["F1"], fitness.Objectives["F2"])
+	fitness.InequalityConstraints["C2"] = constraint4(x, fitness.Objectives["F1"], fitness.Objectives["F2"], 2)
 
 	return fitness
 }
@@ -151,7 +151,7 @@ func CMOP9(x []float64) Fitness {
 func CMOP10(x []float64) Fitness {
 	fitness := Fitness{}
 
-	fitness.HardConstraints = make(map[string]bool)
+	fitness.InequalityConstraints = make(map[string]bool)
 	fitness.Objectives = make(map[string]float64)
 
 	fitness.Objectives["F1"] = objective7(x)
@@ -162,8 +162,8 @@ func CMOP10(x []float64) Fitness {
 	a := []float64{2.0}
 	b := []float64{4.0}
 
-	fitness.HardConstraints["C1"] = constraint3(x, p, q, a, b, 0, fitness.Objectives["F1"], fitness.Objectives["F2"])
-	fitness.HardConstraints["C2"] = constraint4(x, fitness.Objectives["F1"], fitness.Objectives["F2"], 1)
+	fitness.InequalityConstraints["C1"] = constraint3(x, p, q, a, b, 0, fitness.Objectives["F1"], fitness.Objectives["F2"])
+	fitness.InequalityConstraints["C2"] = constraint4(x, fitness.Objectives["F1"], fitness.Objectives["F2"], 1)
 
 	return fitness
 }
@@ -171,7 +171,7 @@ func CMOP10(x []float64) Fitness {
 func CMOP11(x []float64) Fitness {
 	fitness := Fitness{}
 
-	fitness.HardConstraints = make(map[string]bool)
+	fitness.InequalityConstraints = make(map[string]bool)
 	fitness.Objectives = make(map[string]float64)
 
 	fitness.Objectives["F1"] = objective7(x)
@@ -182,8 +182,8 @@ func CMOP11(x []float64) Fitness {
 	a := []float64{1.5}
 	b := []float64{5.0}
 
-	fitness.HardConstraints["C1"] = constraint3(x, p, q, a, b, 0, fitness.Objectives["F1"], fitness.Objectives["F2"])
-	fitness.HardConstraints["C2"] = constraint4(x, fitness.Objectives["F1"], fitness.Objectives["F2"], 2.1)
+	fitness.InequalityConstraints["C1"] = constraint3(x, p, q, a, b, 0, fitness.Objectives["F1"], fitness.Objectives["F2"])
+	fitness.InequalityConstraints["C2"] = constraint4(x, fitness.Objectives["F1"], fitness.Objectives["F2"], 2.1)
 
 	return fitness
 }
@@ -191,7 +191,7 @@ func CMOP11(x []float64) Fitness {
 func CMOP12(x []float64) Fitness {
 	fitness := Fitness{}
 
-	fitness.HardConstraints = make(map[string]bool)
+	fitness.InequalityConstraints = make(map[string]bool)
 	fitness.Objectives = make(map[string]float64)
 
 	fitness.Objectives["F1"] = objective7(x)
@@ -202,8 +202,8 @@ func CMOP12(x []float64) Fitness {
 	a := []float64{1.5}
 	b := []float64{6.0}
 
-	fitness.HardConstraints["C1"] = constraint3(x, p, q, a, b, 0, fitness.Objectives["F1"], fitness.Objectives["F2"])
-	fitness.HardConstraints["C2"] = constraint4(x, fitness.Objectives["F1"], fitness.Objectives["F2"], 2.5)
+	fitness.InequalityConstraints["C1"] = constraint3(x, p, q, a, b, 0, fitness.Objectives["F1"], fitness.Objectives["F2"])
+	fitness.InequalityConstraints["C2"] = constraint4(x, fitness.Objectives["F1"], fitness.Objectives["F2"], 2.5)
 
 	return fitness
 }
