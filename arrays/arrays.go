@@ -1,6 +1,7 @@
 package arrays
 
 import (
+	"fmt"
 	"math"
 	"strconv"
 )
@@ -106,18 +107,19 @@ func DistributedTriangleVectors(objectives, populationSize int) [][]float64 {
 }
 
 //UniformDistributedVectors generates a set of uniformly distributed vectors
-func UniformDistributedVectors(m, H int) [][]float64 {
+func UniformDistributedVectors(m, H int) []Vector {
 	buf := make([]int, m)
-	var result [][]float64
+	var result []Vector
 
 	for true {
-		arr := make([]float64, m)
+		vector := Vector{Size: m}
+		vector.Zeros()
 		for i := 0; i < m-1; i++ {
-			arr[i] = float64(buf[i+1]-buf[i]) / float64(H)
+			vector.Set(i, float64(buf[i+1]-buf[i])/float64(H))
 		}
-		arr[m-1] = float64(H-buf[m-1]) / float64(H)
+		vector.Set(m-1, float64(H-buf[m-1])/float64(H))
 
-		result = append(result, arr)
+		result = append(result, vector)
 
 		var p int
 		for p = m - 1; p != 0 && buf[p] == H; p-- {
@@ -134,7 +136,10 @@ func UniformDistributedVectors(m, H int) [][]float64 {
 	return result
 }
 
-func NearestNeighbour(arr [][]float64, i, T int) []int {
+//NearestNeighbour calculates the closest T vectors for vector i in the set arr.
+//NOTE the implementation makes the assumption that the vector i is it's own closest neighbour.
+//The MOEA/D framework also makes this assumption
+func NearestNeighbour(arr []Vector, i, T int) []int {
 	neighbourIndexes := make([]int, T)
 
 	for x := range neighbourIndexes {
@@ -145,7 +150,8 @@ func NearestNeighbour(arr [][]float64, i, T int) []int {
 		distance := math.MaxFloat64
 		index := -1
 		for j := range arr {
-			dist := EuclideanDistance(arr[i], arr[j])
+			dist := arr[i].Dist(arr[j])
+			fmt.Println(dist)
 			if dist < distance && !Includes(neighbourIndexes, j) {
 				distance = dist
 				index = j
