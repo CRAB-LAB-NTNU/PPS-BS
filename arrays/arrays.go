@@ -1,7 +1,6 @@
 package arrays
 
 import (
-	"fmt"
 	"math"
 	"strconv"
 )
@@ -151,7 +150,6 @@ func NearestNeighbour(arr []Vector, i, T int) []int {
 		index := -1
 		for j := range arr {
 			dist := arr[i].Dist(arr[j])
-			fmt.Println(dist)
 			if dist < distance && !Includes(neighbourIndexes, j) {
 				distance = dist
 				index = j
