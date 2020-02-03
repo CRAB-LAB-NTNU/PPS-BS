@@ -76,13 +76,12 @@ type MOEA interface {
 	InitialisePopulation() []Individual
 	Evaluate() testSuite.Fitness
 	Evolve(Stage) []Individual
-	Cossover() []Individual
-	Mutate() Individual
+	Crossover([]Individual) []Individual
 }
 
 // Individual is an interface describing an individual in a population
 type Individual interface {
-	Genotype()
+	Genotype() []float64 //TODO: se på måter å gjøre dette mer generelt senere
 	Fitness()
 	UpdateFitness()
 	Mutate()
