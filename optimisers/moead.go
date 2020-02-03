@@ -88,6 +88,7 @@ func (m *Moead) Evolve() {
 		// As an improvement heuristic is problem specific, i guess the mutation step can be used for this purpose.
 		// We might need a Mutation Function aswell as a Repair function.
 		// The PPS paper uses a more traditional DE variant by comparing in the first phase.
+		// We handle this in the Crossover()
 
 	}
 }
