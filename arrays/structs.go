@@ -39,3 +39,7 @@ func (v *Vector) Length() float64 {
 func (v *Vector) Dist(u Vector) float64 {
 	return EuclideanDistance(v.inner, u.inner)
 }
+
+func (v *Vector) Get(i int) float64 {
+	return v.inner[i]
+}

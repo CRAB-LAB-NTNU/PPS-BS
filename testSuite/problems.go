@@ -1,246 +1,264 @@
 package testSuite
 
-import "math"
+import (
+	"math"
 
-func CMOP1(x []float64) Fitness {
-	fitness := Fitness{}
-	fitness.InequalityConstraints = make(map[string]bool)
-	fitness.Objectives = make(map[string]float64)
+	"github.com/CRAB-LAB-NTNU/PPS-BS/types"
+)
 
-	fitness.Objectives["F1"] = objective1(x)
-	fitness.Objectives["F2"] = objective2(x)
-
-	fitness.InequalityConstraints["C1"] = constraint1(x, inner1)
-	fitness.InequalityConstraints["C2"] = constraint1(x, inner2)
-
-	return fitness
+func CMOP1(x types.Genotype) types.Fitness {
+	return types.Fitness{
+		ObjectiveCount:  2,
+		ConstraintCount: 2,
+		ObjectiveTypes: []types.ObjectiveType{
+			types.Minimisation,
+			types.Minimisation,
+		},
+		ConstraintTypes: []types.ConstraintType{
+			types.EqualsOrGreaterThanZero,
+			types.EqualsOrGreaterThanZero,
+		},
+		ObjectiveValues: []float64{
+			objective1(x),
+			objective2(x),
+		},
+		ConstraintValues: []float64{
+			constraint1(x, inner1),
+			constraint1(x, inner2),
+		},
+	}
 }
 
-func CMOP2(x []float64) Fitness {
-	fitness := Fitness{}
-	fitness.InequalityConstraints = make(map[string]bool)
-	fitness.Objectives = make(map[string]float64)
-
-	fitness.Objectives["F1"] = objective1(x)
-	fitness.Objectives["F2"] = objective3(x)
-
-	fitness.InequalityConstraints["C1"] = constraint1(x, inner1)
-	fitness.InequalityConstraints["C2"] = constraint1(x, inner2)
-
-	return fitness
+func CMOP2(x types.Genotype) types.Fitness {
+	return types.Fitness{
+		ObjectiveCount:  2,
+		ConstraintCount: 2,
+		ObjectiveTypes: []types.ObjectiveType{
+			types.Minimisation,
+			types.Minimisation,
+		},
+		ConstraintTypes: []types.ConstraintType{
+			types.EqualsOrGreaterThanZero,
+			types.EqualsOrGreaterThanZero,
+		},
+		ObjectiveValues: []float64{
+			objective1(x),
+			objective3(x),
+		},
+		ConstraintValues: []float64{
+			constraint1(x, inner1),
+			constraint1(x, inner2),
+		},
+	}
 }
 
-func CMOP3(x []float64) Fitness {
+func CMOP3(x types.Genotype) types.Fitness {
 	fitness := CMOP1(x)
-
-	fitness.InequalityConstraints["C3"] = constraint2(x)
-
+	fitness.ConstraintCount = 3
+	fitness.ConstraintValues = append(fitness.ConstraintValues, constraint2(x))
 	return fitness
 }
 
-func CMOP4(x []float64) Fitness {
+func CMOP4(x types.Genotype) types.Fitness {
 	fitness := CMOP2(x)
-
-	fitness.InequalityConstraints["C3"] = constraint2(x)
-
+	fitness.ConstraintCount = 3
+	fitness.ConstraintValues = append(fitness.ConstraintValues, constraint2(x))
 	return fitness
 }
 
-func CMOP5(x []float64) Fitness {
-	fitness := Fitness{}
-
-	fitness.InequalityConstraints = make(map[string]bool)
-	fitness.Objectives = make(map[string]float64)
-
-	fitness.Objectives["F1"] = objective4(x)
-	fitness.Objectives["F2"] = objective5(x)
-
+func CMOP5(x types.Genotype) types.Fitness {
 	p := []float64{1.6, 2.5}
 	q := []float64{1.6, 2.5}
 	a := []float64{2, 2}
 	b := []float64{4, 8}
-
-	fitness.InequalityConstraints["C1"] = constraint3(x, p, q, a, b, 0, fitness.Objectives["F1"], fitness.Objectives["F2"])
-	fitness.InequalityConstraints["C2"] = constraint3(x, p, q, a, b, 1, fitness.Objectives["F1"], fitness.Objectives["F2"])
-
+	fitness := types.Fitness{
+		ObjectiveCount:  2,
+		ConstraintCount: 2,
+		ObjectiveTypes: []types.ObjectiveType{
+			types.Minimisation,
+			types.Minimisation,
+		},
+		ConstraintTypes: []types.ConstraintType{
+			types.EqualsOrGreaterThanZero,
+			types.EqualsOrGreaterThanZero,
+		},
+		ObjectiveValues: []float64{
+			objective4(x),
+			objective5(x),
+		},
+	}
+	fitness.ConstraintValues = []float64{
+		constraint3(x, p, q, a, b, 0, fitness.ObjectiveValues[0], fitness.ObjectiveValues[1]),
+		constraint3(x, p, q, a, b, 1, fitness.ObjectiveValues[0], fitness.ObjectiveValues[1]),
+	}
 	return fitness
 }
 
-func CMOP6(x []float64) Fitness {
-	fitness := Fitness{}
-
-	fitness.InequalityConstraints = make(map[string]bool)
-	fitness.Objectives = make(map[string]float64)
-
-	fitness.Objectives["F1"] = objective4(x)
-	fitness.Objectives["F2"] = objective6(x)
-
+func CMOP6(x types.Genotype) types.Fitness {
 	p := []float64{1.8, 2.8}
 	q := []float64{1.8, 2.8}
 	a := []float64{2, 2}
 	b := []float64{8, 8}
-
-	fitness.InequalityConstraints["C1"] = constraint3(x, p, q, a, b, 0, fitness.Objectives["F1"], fitness.Objectives["F2"])
-	fitness.InequalityConstraints["C2"] = constraint3(x, p, q, a, b, 1, fitness.Objectives["F1"], fitness.Objectives["F2"])
-
+	fitness := types.Fitness{
+		ObjectiveCount:  2,
+		ConstraintCount: 2,
+		ObjectiveTypes: []types.ObjectiveType{
+			types.Minimisation,
+			types.Minimisation,
+		},
+		ConstraintTypes: []types.ConstraintType{
+			types.EqualsOrGreaterThanZero,
+			types.EqualsOrGreaterThanZero,
+		},
+		ObjectiveValues: []float64{
+			objective4(x),
+			objective6(x),
+		},
+	}
+	fitness.ConstraintValues = []float64{
+		constraint3(x, p, q, a, b, 0, fitness.ObjectiveValues[0], fitness.ObjectiveValues[1]),
+		constraint3(x, p, q, a, b, 1, fitness.ObjectiveValues[0], fitness.ObjectiveValues[1]),
+	}
 	return fitness
 }
 
-func CMOP7(x []float64) Fitness {
-	fitness := Fitness{}
-
-	fitness.InequalityConstraints = make(map[string]bool)
-	fitness.Objectives = make(map[string]float64)
-
-	fitness.Objectives["F1"] = objective4(x)
-	fitness.Objectives["F2"] = objective5(x)
-
+func CMOP7(x types.Genotype) types.Fitness {
 	p := []float64{1.2, 2.25, 3.5}
 	q := []float64{1.2, 2.25, 3.5}
 	a := []float64{2, 2.5, 2.5}
 	b := []float64{6, 12, 10}
-
-	fitness.InequalityConstraints["C1"] = constraint3(x, p, q, a, b, 0, fitness.Objectives["F1"], fitness.Objectives["F2"])
-	fitness.InequalityConstraints["C2"] = constraint3(x, p, q, a, b, 1, fitness.Objectives["F1"], fitness.Objectives["F2"])
-	fitness.InequalityConstraints["C3"] = constraint3(x, p, q, a, b, 2, fitness.Objectives["F1"], fitness.Objectives["F2"])
-
+	fitness := types.Fitness{
+		ObjectiveCount: 2, ConstraintCount: 3,
+		ObjectiveTypes:  []types.ObjectiveType{types.Minimisation, types.Minimisation},
+		ConstraintTypes: []types.ConstraintType{types.EqualsOrGreaterThanZero, types.EqualsOrGreaterThanZero, types.EqualsOrGreaterThanZero},
+		ObjectiveValues: []float64{objective4(x), objective5(x)},
+	}
+	fitness.ConstraintValues = []float64{
+		constraint3(x, p, q, a, b, 0, fitness.ObjectiveValues[0], fitness.ObjectiveValues[1]),
+		constraint3(x, p, q, a, b, 1, fitness.ObjectiveValues[0], fitness.ObjectiveValues[1]),
+		constraint3(x, p, q, a, b, 2, fitness.ObjectiveValues[0], fitness.ObjectiveValues[1]),
+	}
 	return fitness
 }
 
-func CMOP8(x []float64) Fitness {
-	fitness := Fitness{}
-
-	fitness.InequalityConstraints = make(map[string]bool)
-	fitness.Objectives = make(map[string]float64)
-
-	fitness.Objectives["F1"] = objective4(x)
-	fitness.Objectives["F2"] = objective6(x)
-
+func CMOP8(x types.Genotype) types.Fitness {
 	p := []float64{1.2, 2.25, 3.5}
 	q := []float64{1.2, 2.25, 3.5}
 	a := []float64{2, 2.5, 2.5}
 	b := []float64{6, 12, 10}
-
-	fitness.InequalityConstraints["C1"] = constraint3(x, p, q, a, b, 0, fitness.Objectives["F1"], fitness.Objectives["F2"])
-	fitness.InequalityConstraints["C2"] = constraint3(x, p, q, a, b, 1, fitness.Objectives["F1"], fitness.Objectives["F2"])
-	fitness.InequalityConstraints["C3"] = constraint3(x, p, q, a, b, 2, fitness.Objectives["F1"], fitness.Objectives["F2"])
-
+	fitness := types.Fitness{
+		ObjectiveCount: 2, ConstraintCount: 3,
+		ObjectiveTypes:  []types.ObjectiveType{types.Minimisation, types.Minimisation},
+		ConstraintTypes: []types.ConstraintType{types.EqualsOrGreaterThanZero, types.EqualsOrGreaterThanZero, types.EqualsOrGreaterThanZero},
+		ObjectiveValues: []float64{objective4(x), objective6(x)},
+	}
+	fitness.ConstraintValues = []float64{
+		constraint3(x, p, q, a, b, 0, fitness.ObjectiveValues[0], fitness.ObjectiveValues[1]),
+		constraint3(x, p, q, a, b, 1, fitness.ObjectiveValues[0], fitness.ObjectiveValues[1]),
+		constraint3(x, p, q, a, b, 2, fitness.ObjectiveValues[0], fitness.ObjectiveValues[1]),
+	}
 	return fitness
 }
 
-func CMOP9(x []float64) Fitness {
-	fitness := Fitness{}
-
-	fitness.InequalityConstraints = make(map[string]bool)
-	fitness.Objectives = make(map[string]float64)
-
-	fitness.Objectives["F1"] = objective7(x)
-	fitness.Objectives["F2"] = objective8(x)
-
+func CMOP9(x types.Genotype) types.Fitness {
 	p := []float64{1.4}
 	q := []float64{1.4}
 	a := []float64{1.5}
 	b := []float64{6.0}
-
-	fitness.InequalityConstraints["C1"] = constraint3(x, p, q, a, b, 0, fitness.Objectives["F1"], fitness.Objectives["F2"])
-	fitness.InequalityConstraints["C2"] = constraint4(x, fitness.Objectives["F1"], fitness.Objectives["F2"], 2)
-
+	fitness := types.Fitness{
+		ObjectiveCount: 2, ConstraintCount: 2,
+		ObjectiveTypes:  []types.ObjectiveType{types.Minimisation, types.Minimisation},
+		ConstraintTypes: []types.ConstraintType{types.EqualsOrGreaterThanZero, types.EqualsOrGreaterThanZero, types.EqualsOrGreaterThanZero},
+		ObjectiveValues: []float64{objective7(x), objective8(x)},
+	}
+	fitness.ConstraintValues = []float64{
+		constraint3(x, p, q, a, b, 0, fitness.ObjectiveValues[0], fitness.ObjectiveValues[1]),
+		constraint4(x, fitness.ObjectiveValues[0], fitness.ObjectiveValues[1], 2),
+	}
 	return fitness
 }
 
-func CMOP10(x []float64) Fitness {
-	fitness := Fitness{}
-
-	fitness.InequalityConstraints = make(map[string]bool)
-	fitness.Objectives = make(map[string]float64)
-
-	fitness.Objectives["F1"] = objective7(x)
-	fitness.Objectives["F2"] = objective9(x)
-
+func CMOP10(x types.Genotype) types.Fitness {
 	p := []float64{1.1}
 	q := []float64{1.2}
 	a := []float64{2.0}
 	b := []float64{4.0}
-
-	fitness.InequalityConstraints["C1"] = constraint3(x, p, q, a, b, 0, fitness.Objectives["F1"], fitness.Objectives["F2"])
-	fitness.InequalityConstraints["C2"] = constraint4(x, fitness.Objectives["F1"], fitness.Objectives["F2"], 1)
-
+	fitness := types.Fitness{
+		ObjectiveCount: 2, ConstraintCount: 2,
+		ObjectiveTypes:  []types.ObjectiveType{types.Minimisation, types.Minimisation},
+		ConstraintTypes: []types.ConstraintType{types.EqualsOrGreaterThanZero, types.EqualsOrGreaterThanZero, types.EqualsOrGreaterThanZero},
+		ObjectiveValues: []float64{objective7(x), objective9(x)},
+	}
+	fitness.ConstraintValues = []float64{
+		constraint3(x, p, q, a, b, 0, fitness.ObjectiveValues[0], fitness.ObjectiveValues[1]),
+		constraint4(x, fitness.ObjectiveValues[0], fitness.ObjectiveValues[1], 1),
+	}
 	return fitness
 }
 
-func CMOP11(x []float64) Fitness {
-	fitness := Fitness{}
-
-	fitness.InequalityConstraints = make(map[string]bool)
-	fitness.Objectives = make(map[string]float64)
-
-	fitness.Objectives["F1"] = objective7(x)
-	fitness.Objectives["F2"] = objective9(x)
-
+func CMOP11(x types.Genotype) types.Fitness {
 	p := []float64{1.2}
 	q := []float64{1.2}
 	a := []float64{1.5}
 	b := []float64{5.0}
-
-	fitness.InequalityConstraints["C1"] = constraint3(x, p, q, a, b, 0, fitness.Objectives["F1"], fitness.Objectives["F2"])
-	fitness.InequalityConstraints["C2"] = constraint4(x, fitness.Objectives["F1"], fitness.Objectives["F2"], 2.1)
-
+	fitness := types.Fitness{
+		ObjectiveCount: 2, ConstraintCount: 2,
+		ObjectiveTypes:  []types.ObjectiveType{types.Minimisation, types.Minimisation},
+		ConstraintTypes: []types.ConstraintType{types.EqualsOrGreaterThanZero, types.EqualsOrGreaterThanZero, types.EqualsOrGreaterThanZero},
+		ObjectiveValues: []float64{objective7(x), objective9(x)},
+	}
+	fitness.ConstraintValues = []float64{
+		constraint3(x, p, q, a, b, 0, fitness.ObjectiveValues[0], fitness.ObjectiveValues[1]),
+		constraint4(x, fitness.ObjectiveValues[0], fitness.ObjectiveValues[1], 2.1),
+	}
 	return fitness
 }
 
-func CMOP12(x []float64) Fitness {
-	fitness := Fitness{}
-
-	fitness.InequalityConstraints = make(map[string]bool)
-	fitness.Objectives = make(map[string]float64)
-
-	fitness.Objectives["F1"] = objective7(x)
-	fitness.Objectives["F2"] = objective8(x)
-
+func CMOP12(x types.Genotype) types.Fitness {
 	p := []float64{1.6}
 	q := []float64{1.6}
 	a := []float64{1.5}
 	b := []float64{6.0}
-
-	fitness.InequalityConstraints["C1"] = constraint3(x, p, q, a, b, 0, fitness.Objectives["F1"], fitness.Objectives["F2"])
-	fitness.InequalityConstraints["C2"] = constraint4(x, fitness.Objectives["F1"], fitness.Objectives["F2"], 2.5)
-
+	fitness := types.Fitness{
+		ObjectiveCount: 2, ConstraintCount: 2,
+		ObjectiveTypes:  []types.ObjectiveType{types.Minimisation, types.Minimisation},
+		ConstraintTypes: []types.ConstraintType{types.EqualsOrGreaterThanZero, types.EqualsOrGreaterThanZero, types.EqualsOrGreaterThanZero},
+		ObjectiveValues: []float64{objective7(x), objective8(x)},
+	}
+	fitness.ConstraintValues = []float64{
+		constraint3(x, p, q, a, b, 0, fitness.ObjectiveValues[0], fitness.ObjectiveValues[1]),
+		constraint4(x, fitness.ObjectiveValues[0], fitness.ObjectiveValues[1], 2.5),
+	}
 	return fitness
 }
 
-func CMOP13(x []float64) Fitness {
-	fitness := Fitness{}
-
-	fitness.SoftConstraints = make(map[string]float64)
-	fitness.Objectives = make(map[string]float64)
-
-	fitness.Objectives["F1"] = objective10(x)
-	fitness.Objectives["F2"] = objective11(x)
-	fitness.Objectives["F3"] = objective12(x)
-
-	g := math.Pow(fitness.Objectives["F1"], 2) + math.Pow(fitness.Objectives["F2"], 2) + math.Pow(fitness.Objectives["F3"], 2)
-
-	fitness.SoftConstraints["C1"] = constraint5(x, g, 9, 4)
-	fitness.SoftConstraints["C2"] = constraint5(x, g, 3.61, 3.24)
-
+func CMOP13(x types.Genotype) types.Fitness {
+	fitness := types.Fitness{
+		ObjectiveCount: 3, ConstraintCount: 2,
+		ObjectiveTypes:  []types.ObjectiveType{types.Minimisation, types.Minimisation},
+		ConstraintTypes: []types.ConstraintType{types.EqualsOrGreaterThanZero, types.EqualsOrGreaterThanZero, types.EqualsOrGreaterThanZero},
+		ObjectiveValues: []float64{objective10(x), objective11(x), objective12(x)},
+	}
+	g := math.Pow(fitness.ObjectiveValues[0], 2) + math.Pow(fitness.ObjectiveValues[1], 2) + math.Pow(fitness.ObjectiveValues[2], 2)
+	fitness.ConstraintValues = []float64{
+		constraint5(x, g, 9, 4),
+		constraint5(x, g, 3.61, 3.24),
+	}
 	return fitness
 }
 
-func CMOP14(x []float64) Fitness {
-	fitness := Fitness{}
-
-	fitness.SoftConstraints = make(map[string]float64)
-	fitness.Objectives = make(map[string]float64)
-
-	fitness.Objectives["F1"] = objective10(x)
-	fitness.Objectives["F2"] = objective11(x)
-	fitness.Objectives["F3"] = objective12(x)
-
-	g := math.Pow(fitness.Objectives["F1"], 2) + math.Pow(fitness.Objectives["F2"], 2) + math.Pow(fitness.Objectives["F3"], 2)
-
-	fitness.SoftConstraints["C1"] = constraint5(x, g, 9, 4)
-	fitness.SoftConstraints["C2"] = constraint5(x, g, 3.61, 3.24)
-	fitness.SoftConstraints["C3"] = constraint5(x, g, 3.0625, 2.56)
-
+func CMOP14(x types.Genotype) types.Fitness {
+	fitness := types.Fitness{
+		ObjectiveCount: 3, ConstraintCount: 3,
+		ObjectiveTypes:  []types.ObjectiveType{types.Minimisation, types.Minimisation},
+		ConstraintTypes: []types.ConstraintType{types.EqualsOrGreaterThanZero, types.EqualsOrGreaterThanZero, types.EqualsOrGreaterThanZero},
+		ObjectiveValues: []float64{objective10(x), objective11(x), objective12(x)},
+	}
+	g := math.Pow(fitness.ObjectiveValues[0], 2) + math.Pow(fitness.ObjectiveValues[1], 2) + math.Pow(fitness.ObjectiveValues[2], 2)
+	fitness.ConstraintValues = []float64{
+		constraint5(x, g, 9, 4),
+		constraint5(x, g, 3.61, 3.24),
+		constraint5(x, g, 3.0625, 2.56),
+	}
 	return fitness
 }

@@ -14,6 +14,10 @@ func Includes(arr []int, val int) bool {
 	return false
 }
 
+func Remove(arr []int, i int) []int {
+	return append(arr[:i], arr[i+1:]...)
+}
+
 func Sum(arr []float64) float64 {
 	var s float64
 	for i := 0; i < len(arr); i++ {
@@ -132,7 +136,7 @@ func UniformDistributedVectors(m, H int) []Vector {
 		}
 
 	}
-	return result
+	return result[1 : len(result)-1]
 }
 
 //NearestNeighbour calculates the closest T vectors for vector i in the set arr.
