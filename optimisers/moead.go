@@ -154,6 +154,14 @@ func (m *Moead) Crossover(parents []types.Individual) []types.Individual {
 	return []types.Individual{&child}
 }
 
+func (m Moead) ConstraintViolation() []float64 {
+	a := make([]float64, m.populationSize)
+	for i, ind := range m.Population {
+		a[i] = maximumConstraintViolation(ind.Fitness())
+	}
+	return a
+}
+
 /*Evolve performs the genetic operator on all individuals in the population
  */
 func (m *Moead) Evolve(stage types.Stage) {

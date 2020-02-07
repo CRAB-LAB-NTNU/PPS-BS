@@ -4,24 +4,25 @@ import (
 	"image/color"
 	"log"
 
-	"github.com/CRAB-LAB-NTNU/PPS-BS/pps"
+	"github.com/CRAB-LAB-NTNU/PPS-BS/types"
 	"gonum.org/v1/plot"
 	"gonum.org/v1/plot/plotter"
 	"gonum.org/v1/plot/vg"
 )
 
-func (plotter2d *Plotter2D) Plot(popululation []pps.Individual) {
+func (plotter2d *Plotter2D) Plot(popululation, archive []types.Individual) {
 
 	points := convertPopoulationToPoints2D(popululation)
+	points2 := convertPopoulationToPoints2D(archive)
 
 	p, err := plot.New()
 	if err != nil {
 		log.Panic(err)
 	}
 
-	p.Title.Text = plotter2d.title
-	p.X.Label.Text = plotter2d.labelX
-	p.X.Label.Text = plotter2d.labelY
+	p.Title.Text = plotter2d.Title
+	p.X.Label.Text = plotter2d.LabelX
+	p.X.Label.Text = plotter2d.LabelY
 
 	p.Add(plotter.NewGrid())
 
@@ -29,16 +30,21 @@ func (plotter2d *Plotter2D) Plot(popululation []pps.Individual) {
 	s.GlyphStyle.Color = color.RGBA{R: 255, B: 128, A: 255}
 	s.GlyphStyle.Radius = vg.Points(1)
 
-	p.Add(s)
-	p.Legend.Add("Individuals", s)
+	a, err := plotter.NewScatter(points2)
+	a.GlyphStyle.Color = color.RGBA{R: 0, B: 255, A: 255}
+	a.GlyphStyle.Radius = vg.Points(1)
 
-	err = p.Save(200, 200, "testdata/scatter.png")
+	p.Add(s)
+	p.Add(a)
+	p.Legend.Add("Archive", a)
+	p.Legend.Add("Population", s)
+	err = p.Save(200, 200, "plotter/testdata/scatter.png")
 	if err != nil {
 		log.Panic(err)
 	}
 
 }
-func convertPopoulationToPoints2D(population []pps.Individual) plotter.XYs {
+func convertPopoulationToPoints2D(population []types.Individual) plotter.XYs {
 	points := make(plotter.XYs, len(population))
 	for i := range points {
 		objectiveValues := population[i].Fitness().ObjectiveValues

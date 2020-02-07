@@ -6,7 +6,7 @@ type Plotter interface {
 }
 
 type Plotter2D struct {
-	title  string
-	labelX string
-	labelY string
+	Title  string
+	LabelX string
+	LabelY string
 }
