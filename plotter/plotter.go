@@ -3,6 +3,7 @@ package plotter
 import (
 	"image/color"
 	"log"
+	"math"
 
 	"github.com/CRAB-LAB-NTNU/PPS-BS/types"
 	"gonum.org/v1/plot"
@@ -44,6 +45,46 @@ func (plotter2d *Plotter2D) Plot(popululation, archive []types.Individual) {
 	}
 
 }
+
+func (plotter2d *Plotter2D) PlotInfeasible(pop []types.Individual) {
+	var points plotter.XYs
+	for i := range pop {
+		if !feasible(pop[i].Fitness()) {
+			ov := pop[i].Fitness().ObjectiveValues
+			point := plotter.XY{X: ov[0], Y: ov[1]}
+			points = append(points, point)
+		}
+	}
+	p, err := plot.New()
+	if err != nil {
+		log.Panic(err)
+	}
+	p.Title.Text = plotter2d.Title
+	p.X.Label.Text = plotter2d.LabelX
+	p.Y.Label.Text = plotter2d.LabelY
+	p.Add(plotter.NewGrid())
+
+	s, err := plotter.NewScatter(points)
+	s.GlyphStyle.Color = color.RGBA{R: 0, G: 0, B: 0, A: 100}
+	s.GlyphStyle.Radius = vg.Points(1)
+	p.Add(s)
+	p.Save(200, 200, "plotter/testdata/region.png")
+}
+
+func violation(f types.Fitness) float64 {
+	var s float64
+	for _, f := range f.ConstraintValues {
+		if f < 0 {
+			s += math.Abs(f)
+		}
+	}
+	return s
+}
+
+func feasible(f types.Fitness) bool {
+	return violation(f) <= 0
+}
+
 func convertPopoulationToPoints2D(population []types.Individual) plotter.XYs {
 	points := make(plotter.XYs, len(population))
 	for i := range points {

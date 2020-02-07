@@ -25,6 +25,10 @@ func (i *MoeadIndividual) SetGenotype(g []float64) {
 	i.genotype = g
 }
 
+func (i *MoeadIndividual) SetFitness(f types.Fitness) {
+	i.fitness = f
+}
+
 /*Genotype returns the genotype of the individual
  */
 func (i MoeadIndividual) Genotype() types.Genotype {
