@@ -100,7 +100,7 @@ type Moead struct {
 	Population                                                           []types.Individual
 	CMOP                                                                 types.CMOP
 	WeightNeigbourhoodSize, WeightDistribution, populationSize           int
-	DecisionSize, MaxChangeIndividuals                                   int
+	DecisionSize, MaxChangeIndividuals, generation                       int
 	DEDifferentialWeight, CrossoverRate, DistributionIndex, maxViolation float64
 	Weights                                                              []arrays.Vector
 	WeightNeigbourhood                                                   [][]int
@@ -169,8 +169,11 @@ func (m Moead) ConstraintViolation() []float64 {
 /*Evolve performs the genetic operator on all individuals in the population
  */
 func (m *Moead) Evolve(stage types.Stage) {
-	fmt.Println()
-	fmt.Println("Evolving. Ideal point:", m.IdealPoint, "maxConstraintViolation:", m.maxViolation)
+	m.generation++
+	if m.generation%100 == 0 {
+		fmt.Println("Evolving. Generation", m.generation, "\nIdeal point:", m.IdealPoint, "\tmaxConstraintViolation:", m.maxViolation)
+	}
+
 	for i := 0; i < m.populationSize; i++ {
 
 		var hood []int
@@ -250,10 +253,10 @@ func (m *Moead) Evolve(stage types.Stage) {
 }
 
 func ndSelect(archive, population []types.Individual, n int) []types.Individual {
-	fmt.Println("Selecting from archive of length:", len(archive), "and population of length:", len(population))
+	//fmt.Println("Selecting from archive of length:", len(archive), "and population of length:", len(population))
 
 	union := biooperators.UnionPopulations(archive, population)
-	fmt.Println("Created Union of length", len(union))
+	//fmt.Println("Created Union of length", len(union))
 
 	var feasibleSet []types.Individual
 	feasibleCount := 0
@@ -287,7 +290,7 @@ func ndSelect(archive, population []types.Individual, n int) []types.Individual 
 		}
 		sort.Slice(helper, func(i, j int) bool { return helper[i].Value < helper[j].Value })
 
-		for j := 0; j < remaining; j++ {
+		for j := 0; j < remaining && j < len(helper); j++ {
 			val := helper[j].Key
 			result = append(result, q[i][val])
 		}
@@ -300,6 +303,7 @@ func maximumConstraintViolation(fitness types.Fitness) float64 {
 	for _, cValue := range fitness.ConstraintValues {
 		s += math.Abs(math.Min(cValue, 0))
 	}
+	//fmt.Println(s)
 	return s
 }
 

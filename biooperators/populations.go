@@ -42,10 +42,6 @@ func FastNonDominatedSort(population []types.Individual) [][]types.Individual {
 	indexLookup := make(map[types.Individual]int)
 
 	for p := range population {
-		if indexLookup[population[p]] != 0 {
-
-			fmt.Println("KØLLE")
-		}
 		indexLookup[population[p]] = p
 		for q := range population {
 			if Dominates(population[p], population[q]) {
@@ -74,14 +70,12 @@ func FastNonDominatedSort(population []types.Individual) [][]types.Individual {
 		i++
 		fronts[i] = H
 	}
-
 	for j := len(fronts) - 1; j >= 0; j-- {
 		if len(fronts[j]) > 0 {
 			break
 		}
 		fronts = fronts[:j]
 	}
-
 	return fronts
 }
 
