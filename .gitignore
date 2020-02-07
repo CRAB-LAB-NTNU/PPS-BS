@@ -16,3 +16,5 @@
  
 main.go
 plotter/testdata/*
+goWrite.txt
+test.txt
