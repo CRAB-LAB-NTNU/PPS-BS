@@ -21,6 +21,10 @@ type MoeadIndividual struct {
 	fitness  types.Fitness
 }
 
+func (i *MoeadIndividual) SetGenotype(g []float64) {
+	i.genotype = g
+}
+
 /*Genotype returns the genotype of the individual
  */
 func (i MoeadIndividual) Genotype() types.Genotype {
@@ -153,11 +157,22 @@ func (m *Moead) Crossover(parents []types.Individual) []types.Individual {
 /*Evolve performs the genetic operator on all individuals in the population
  */
 func (m *Moead) Evolve(stage types.Stage) {
-	fmt.Println("Evolving", m.IdealPoint)
-
+	fmt.Println()
+	fmt.Println("Evolving. Ideal point:", m.IdealPoint, "maxConstraintViolation:", m.maxViolation)
 	for i := 0; i < m.populationSize; i++ {
-		hood := make([]int, len(m.WeightNeigbourhood[i]))
-		copy(hood, m.WeightNeigbourhood[i])
+
+		var hood []int
+
+		if rand.Float64() < 0.9 {
+			hood = make([]int, len(m.WeightNeigbourhood[i]))
+			copy(hood, m.WeightNeigbourhood[i])
+		} else {
+			hood = make([]int, m.populationSize)
+			for i := range hood {
+				hood[i] = i
+			}
+		}
+
 		x := rand.Intn(len(hood))
 		if x == 0 {
 			x = 1
@@ -191,7 +206,24 @@ func (m *Moead) Evolve(stage types.Stage) {
 				offSpringScalar := tchebycheff(f.ObjectiveValues, m.IdealPoint, m.Weights[i])
 				if offSpringScalar <= parentScalar {
 					replaced = true
-					m.Population[j] = offSpring[0]
+
+					copyOffspring := MoeadIndividual{
+						D:        len(offSpring[0].Genotype()),
+						genotype: offSpring[0].Genotype(),
+						fitness:  offSpring[0].Fitness(),
+					}
+
+					m.Population[hood[j]] = &copyOffspring
+
+				} else {
+					gene := make([]float64, len(m.Population[hood[j]].Genotype()))
+					copy(gene, m.Population[hood[j]].Genotype())
+					parentCopy := MoeadIndividual{
+						D:        len(m.Population[hood[j]].Genotype()),
+						genotype: gene,
+						fitness:  m.Population[hood[j]].Fitness(),
+					}
+					m.Population[hood[j]] = &parentCopy
 				}
 			} else {
 				// PULL
@@ -202,16 +234,17 @@ func (m *Moead) Evolve(stage types.Stage) {
 			hood = arrays.Remove(hood, j)
 		}
 	}
-	fmt.Println("Selecting from", len(m.Archive), len(m.Population))
 	m.Archive = ndSelect(m.Archive, m.Population, m.populationSize)
 }
 
 func ndSelect(archive, population []types.Individual, n int) []types.Individual {
-	union := append(archive, population...)
-	fmt.Println("union size", len(union))
+	fmt.Println("Selecting from archive of length:", len(archive), "and population of length:", len(population))
+
+	union := biooperators.UnionPopulations(archive, population)
+	fmt.Println("Created Union of length", len(union))
+
 	var feasibleSet []types.Individual
 	feasibleCount := 0
-
 	var result []types.Individual
 
 	for i, ind := range union {
@@ -220,18 +253,13 @@ func ndSelect(archive, population []types.Individual, n int) []types.Individual 
 			feasibleSet = append(feasibleSet, union[i])
 		}
 	}
-	fmt.Println("feasibleCount:", feasibleCount)
 	if feasibleCount <= n {
 		result = feasibleSet
 	} else {
 		q := biooperators.FastNonDominatedSort(feasibleSet)
 		i := 0
-		for morenDin := range q {
-			fmt.Println(q[morenDin])
-		}
 
 		for len(result)+len(q[i]) < n {
-			fmt.Println(i, len(q))
 			result = append(result, q[i]...)
 			i++
 		}
@@ -279,4 +307,8 @@ func tchebycheff(objectiveValues, idealPoint []float64, weight arrays.Vector) fl
 		}
 	}
 	return max
+}
+
+func Tchebycheff(objectiveValues, idealPoint []float64, weight arrays.Vector) float64 {
+	return tchebycheff(objectiveValues, idealPoint, weight)
 }

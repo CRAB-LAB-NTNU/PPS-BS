@@ -43,6 +43,7 @@ func FastNonDominatedSort(population []types.Individual) [][]types.Individual {
 
 	for p := range population {
 		if indexLookup[population[p]] != 0 {
+
 			fmt.Println("KØLLE")
 		}
 		indexLookup[population[p]] = p
@@ -139,4 +140,26 @@ func PrintIndividualToGeogebraPoint(ind types.Individual) {
 		}
 	}
 	fmt.Println(")")
+}
+
+func UnionPopulations(a, b []types.Individual) []types.Individual {
+	check := make(map[types.Individual]bool)
+	var union []types.Individual
+	counter := 0
+	for _, ind := range a {
+		if _, ok := check[ind]; ok {
+			fmt.Println("Union exists")
+			counter++
+		}
+		check[ind] = true
+		union = append(union, ind)
+	}
+	for _, ind := range b {
+		if _, ok := check[ind]; !ok {
+			union = append(union, ind)
+		} else {
+			fmt.Println("Union duplicate")
+		}
+	}
+	return union
 }
