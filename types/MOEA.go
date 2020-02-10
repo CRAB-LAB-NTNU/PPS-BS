@@ -53,12 +53,11 @@ type ConstraintFunction func(Genotype) float64
 */
 // MOEA is an interface describing Multi Objective Evolutionary Algorithms
 type MOEA interface {
-	Initialise()
 	MaxGeneration() int
+	MaxViolation() float64
 	Population() []Individual
-	InitialisePopulation() []Individual
-	Evaluate() Fitness
-	Evolve(Stage) []Individual
+	Initialise()
+	Evolve(Stage, []float64)
 	Crossover([]Individual) []Individual
 }
 

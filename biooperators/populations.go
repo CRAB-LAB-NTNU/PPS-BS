@@ -34,6 +34,33 @@ func CalculateIdealPoints(population []types.Individual) []float64 {
 	return point
 }
 
+func CalculateNadirPoints(population []types.Individual) []float64 {
+	oc := population[0].Fitness().ObjectiveCount
+	point := make([]float64, oc)
+	for i := 0; i < oc; i++ {
+		if population[0].Fitness().ObjectiveTypes[i] == types.Minimisation {
+			point[i] = math.SmallestNonzeroFloat64
+		} else {
+			point[i] = math.MaxFloat64
+		}
+	}
+	for _, ind := range population {
+		fitness := ind.Fitness()
+		for j := 0; j < fitness.ObjectiveCount; j++ {
+			if fitness.ObjectiveTypes[j] == types.Minimisation && fitness.ObjectiveValues[j] > point[j] {
+				point[j] = fitness.ObjectiveValues[j]
+			} else if fitness.ObjectiveTypes[j] == types.Maximisation && fitness.ObjectiveValues[j] < point[j] {
+				point[j] = fitness.ObjectiveValues[j]
+			}
+		}
+	}
+	return point
+}
+
+func CalculateNadirAndIdealPoints(population []types.Individual) ([]float64, []float64) {
+	return CalculateIdealPoints(population), CalculateNadirPoints(population)
+}
+
 func FastNonDominatedSort(population []types.Individual) [][]types.Individual {
 
 	fronts := make([][]types.Individual, len(population))

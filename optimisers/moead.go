@@ -97,14 +97,25 @@ func (i *MoeadIndividual) PolynomialMutation(m float64) {
  */
 type Moead struct {
 	Archive                                                              []types.Individual
-	Population                                                           []types.Individual
+	population                                                           []types.Individual
 	CMOP                                                                 types.CMOP
 	WeightNeigbourhoodSize, WeightDistribution, populationSize           int
-	DecisionSize, MaxChangeIndividuals, generation                       int
+	DecisionSize, MaxChangeIndividuals, generation, GenerationMax        int
 	DEDifferentialWeight, CrossoverRate, DistributionIndex, maxViolation float64
 	Weights                                                              []arrays.Vector
 	WeightNeigbourhood                                                   [][]int
 	IdealPoint                                                           []float64
+}
+
+func (m Moead) MaxGeneration() int {
+	return m.GenerationMax
+}
+
+func (m Moead) MaxViolation() float64 {
+	return m.maxViolation
+}
+func (m Moead) Population() []types.Individual {
+	return m.population
 }
 
 /*Initialise initialises the MOEA/D by calculating the weights, weight neighbourhood,
@@ -128,12 +139,12 @@ func (m *Moead) Initialise() {
 	for i := 0; i < m.populationSize; i++ {
 		ind := MoeadIndividual{D: m.DecisionSize}
 		ind.InitialiseRandom(m.CMOP)
-		m.Population = append(m.Population, &ind)
+		m.population = append(m.population, &ind)
 	}
 	//fmt.Println("Population:", m.Population)
-	fmt.Println("Individuals:", len(m.Population))
+	fmt.Println("Individuals:", len(m.population))
 	fmt.Println("Calculating Ideal point")
-	m.IdealPoint = biooperators.CalculateIdealPoints(m.Population)
+	m.IdealPoint = biooperators.CalculateIdealPoints(m.population)
 	fmt.Println("Ideal Point:", m.IdealPoint)
 	m.maxViolation = -1
 }
@@ -160,7 +171,7 @@ func (m *Moead) Crossover(parents []types.Individual) []types.Individual {
 
 func (m Moead) ConstraintViolation() []float64 {
 	a := make([]float64, m.populationSize)
-	for i, ind := range m.Population {
+	for i, ind := range m.population {
 		a[i] = maximumConstraintViolation(ind.Fitness())
 	}
 	return a
@@ -168,32 +179,22 @@ func (m Moead) ConstraintViolation() []float64 {
 
 /*Evolve performs the genetic operator on all individuals in the population
  */
-func (m *Moead) Evolve(stage types.Stage) {
-	m.generation++
+func (m *Moead) Evolve(stage types.Stage, eps []float64) {
 	if m.generation%100 == 0 {
-		fmt.Println("Evolving. Generation", m.generation, "\nIdeal point:", m.IdealPoint, "\tmaxConstraintViolation:", m.maxViolation)
+		fmt.Println("Evolving. Generation", m.generation, "stage", stage)
+		fmt.Println("Ideal point:", m.IdealPoint, "\tmaxConstraintViolation:", m.maxViolation)
 	}
 
 	for i := 0; i < m.populationSize; i++ {
 
-		var hood []int
-
-		if rand.Float64() < 0.9 {
-			hood = make([]int, len(m.WeightNeigbourhood[i]))
-			copy(hood, m.WeightNeigbourhood[i])
-		} else {
-			hood = make([]int, m.populationSize)
-			for i := range hood {
-				hood[i] = i
-			}
-		}
+		hood := m.selectHood(0.9, i)
 
 		x := rand.Intn(len(hood))
 		if x == 0 {
 			x = 1
 		}
 		y := rand.Intn(x)
-		offSpring := m.Crossover([]types.Individual{m.Population[i], m.Population[hood[x]], m.Population[hood[y]]})
+		offSpring := m.Crossover([]types.Individual{m.population[i], m.population[hood[x]], m.population[hood[y]]})
 
 		offSpring[0].UpdateFitness(m.CMOP)
 
@@ -216,32 +217,11 @@ func (m *Moead) Evolve(stage types.Stage) {
 		for c != m.MaxChangeIndividuals && len(hood) > 0 {
 			j := rand.Intn(len(hood))
 			replaced := false
+
 			if stage == types.Push {
-				parentScalar := tchebycheff(m.Population[hood[j]].Fitness().ObjectiveValues, m.IdealPoint, m.Weights[i])
-				offSpringScalar := tchebycheff(f.ObjectiveValues, m.IdealPoint, m.Weights[i])
-				if offSpringScalar <= parentScalar {
-					replaced = true
-
-					copyOffspring := MoeadIndividual{
-						D:        len(offSpring[0].Genotype()),
-						genotype: offSpring[0].Genotype(),
-						fitness:  offSpring[0].Fitness(),
-					}
-
-					m.Population[hood[j]] = &copyOffspring
-
-				} else {
-					gene := make([]float64, len(m.Population[hood[j]].Genotype()))
-					copy(gene, m.Population[hood[j]].Genotype())
-					parentCopy := MoeadIndividual{
-						D:        len(m.Population[hood[j]].Genotype()),
-						genotype: gene,
-						fitness:  m.Population[hood[j]].Fitness(),
-					}
-					m.Population[hood[j]] = &parentCopy
-				}
+				replaced = m.PushProblems(hood[j], offSpring[0])
 			} else {
-				// PULL
+				replaced = m.PullProblems(hood[j], offSpring[0], eps[m.generation])
 			}
 			if replaced == true {
 				c++
@@ -249,7 +229,8 @@ func (m *Moead) Evolve(stage types.Stage) {
 			hood = arrays.Remove(hood, j)
 		}
 	}
-	m.Archive = ndSelect(m.Archive, m.Population, m.populationSize)
+	m.generation++
+	m.Archive = ndSelect(m.Archive, m.population, m.populationSize)
 }
 
 func ndSelect(archive, population []types.Individual, n int) []types.Individual {

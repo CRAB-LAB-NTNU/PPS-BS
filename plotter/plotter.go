@@ -23,7 +23,7 @@ func (plotter2d *Plotter2D) Plot(popululation, archive []types.Individual) {
 
 	p.Title.Text = plotter2d.Title
 	p.X.Label.Text = plotter2d.LabelX
-	p.X.Label.Text = plotter2d.LabelY
+	p.Y.Label.Text = plotter2d.LabelY
 
 	p.Add(plotter.NewGrid())
 
@@ -32,7 +32,7 @@ func (plotter2d *Plotter2D) Plot(popululation, archive []types.Individual) {
 	s.GlyphStyle.Radius = vg.Points(1)
 
 	a, err := plotter.NewScatter(points2)
-	a.GlyphStyle.Color = color.RGBA{R: 0, B: 255, A: 255}
+	a.GlyphStyle.Color = color.RGBA{B: 255, A: 255}
 	a.GlyphStyle.Radius = vg.Points(1)
 
 	p.Add(s)
