@@ -18,6 +18,11 @@ type PPS struct {
 	SearchingPreference, ConstraintRelaxation, RelaxationReduction float64
 	TC, L                                                          int
 	improvedEpsilon                                                []float64
+	switchPopulation                                               []types.Individual
+}
+
+func (pps PPS) SwitchPopulation() []types.Individual {
+	return pps.switchPopulation
 }
 
 // Initialise initialises the PPS framework with a given CMOP, MOEA and CHM
@@ -37,7 +42,7 @@ func generateEmpty2DSliceFloat64(outerLength, innerLength int) [][]float64 {
 }
 
 func (pps *PPS) Run() {
-	for generation := 0; generation < pps.Moea.MaxGeneration(); generation++ {
+	for generation := 0; pps.Moea.FunctionEvaluations() < pps.Moea.MaxGeneration(); generation++ {
 
 		// First we set the ideal and nadir points for this generation based on the current population
 		ip, np := biooperators.CalculateNadirAndIdealPoints(pps.Moea.Population())
@@ -47,15 +52,25 @@ func (pps *PPS) Run() {
 			pps.CalculateMaxChange(generation)
 		}
 		// If the change in ideal or nadir points is lower than a user defined value then we change phases
-		if pps.RK <= pps.Epsilon && pps.Stage == types.Push {
-			fmt.Println("Switching stage")
-			pps.Stage = types.Pull
-			pps.improvedEpsilon[generation], pps.improvedEpsilon[0] = pps.Moea.MaxViolation(), pps.Moea.MaxViolation()
+		if generation <= pps.TC {
+			if pps.RK <= pps.Epsilon && pps.Stage == types.Push {
+				fmt.Println("Switching stage")
+
+				pps.Stage = types.Pull
+
+				pps.switchPopulation = make([]types.Individual, len(pps.Moea.Population()))
+				copy(pps.switchPopulation, pps.Moea.Population())
+
+				pps.improvedEpsilon[generation], pps.improvedEpsilon[0] = pps.Moea.MaxViolation(), pps.Moea.MaxViolation()
+			}
+
+			if pps.Stage == types.Pull {
+				pps.updateEpsilon(generation)
+			}
+		} else {
+			pps.improvedEpsilon[generation] = 0
 		}
 
-		if pps.Stage == types.Pull {
-			pps.updateEpsilon(generation)
-		}
 		// We evolve the population one generation
 		// How this is done will depend on the underlying moea and constraint-handling method
 		pps.Moea.Evolve(pps.Stage, pps.improvedEpsilon)

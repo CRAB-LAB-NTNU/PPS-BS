@@ -235,7 +235,7 @@ func CMOP12(x types.Genotype) types.Fitness {
 func CMOP13(x types.Genotype) types.Fitness {
 	fitness := types.Fitness{
 		ObjectiveCount: 3, ConstraintCount: 2,
-		ObjectiveTypes:  []types.ObjectiveType{types.Minimisation, types.Minimisation},
+		ObjectiveTypes:  []types.ObjectiveType{types.Minimisation, types.Minimisation, types.Minimisation},
 		ConstraintTypes: []types.ConstraintType{types.EqualsOrGreaterThanZero, types.EqualsOrGreaterThanZero, types.EqualsOrGreaterThanZero},
 		ObjectiveValues: []float64{objective10(x), objective11(x), objective12(x)},
 	}
@@ -250,7 +250,7 @@ func CMOP13(x types.Genotype) types.Fitness {
 func CMOP14(x types.Genotype) types.Fitness {
 	fitness := types.Fitness{
 		ObjectiveCount: 3, ConstraintCount: 3,
-		ObjectiveTypes:  []types.ObjectiveType{types.Minimisation, types.Minimisation},
+		ObjectiveTypes:  []types.ObjectiveType{types.Minimisation, types.Minimisation, types.Minimisation},
 		ConstraintTypes: []types.ConstraintType{types.EqualsOrGreaterThanZero, types.EqualsOrGreaterThanZero, types.EqualsOrGreaterThanZero},
 		ObjectiveValues: []float64{objective10(x), objective11(x), objective12(x)},
 	}

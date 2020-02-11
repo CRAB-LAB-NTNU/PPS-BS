@@ -57,6 +57,7 @@ type MOEA interface {
 	MaxViolation() float64
 	Population() []Individual
 	Initialise()
+	FunctionEvaluations() int
 	Evolve(Stage, []float64)
 	Crossover([]Individual) []Individual
 }

@@ -169,7 +169,6 @@ func UnionPopulations(a, b []types.Individual) []types.Individual {
 	counter := 0
 	for _, ind := range a {
 		if _, ok := check[ind]; ok {
-			fmt.Println("Union exists")
 			counter++
 		}
 		check[ind] = true
@@ -179,7 +178,6 @@ func UnionPopulations(a, b []types.Individual) []types.Individual {
 		if _, ok := check[ind]; !ok {
 			union = append(union, ind)
 		} else {
-			fmt.Println("Union duplicate")
 		}
 	}
 	return union

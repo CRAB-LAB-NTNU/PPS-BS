@@ -11,10 +11,11 @@ import (
 	"gonum.org/v1/plot/vg"
 )
 
+//Plot Takes in two lists of individuals. The first list is the population while the second is the archive
 func (plotter2d *Plotter2D) Plot(popululation, archive []types.Individual) {
 
-	points := convertPopoulationToPoints2D(popululation)
-	points2 := convertPopoulationToPoints2D(archive)
+	points, _, _ := convertIndividualsToPoints2D(popululation)
+	points2, _, _ := convertIndividualsToPoints2D(archive)
 
 	p, err := plot.New()
 	if err != nil {
@@ -23,7 +24,11 @@ func (plotter2d *Plotter2D) Plot(popululation, archive []types.Individual) {
 
 	p.Title.Text = plotter2d.Title
 	p.X.Label.Text = plotter2d.LabelX
-	p.Y.Label.Text = plotter2d.LabelY
+	p.X.Label.Text = plotter2d.LabelY
+	p.X.Max = 2
+	p.X.Min = 0
+	p.Y.Max = 2
+	p.Y.Min = 0
 
 	p.Add(plotter.NewGrid())
 
@@ -39,7 +44,7 @@ func (plotter2d *Plotter2D) Plot(popululation, archive []types.Individual) {
 	p.Add(a)
 	p.Legend.Add("Archive", a)
 	p.Legend.Add("Population", s)
-	err = p.Save(200, 200, "plotter/testdata/scatter.png")
+	err = p.Save(500, 500, "plotter/testdata/scatter.png")
 	if err != nil {
 		log.Panic(err)
 	}
@@ -85,14 +90,22 @@ func feasible(f types.Fitness) bool {
 	return violation(f) <= 0
 }
 
-func convertPopoulationToPoints2D(population []types.Individual) plotter.XYs {
-	points := make(plotter.XYs, len(population))
+func convertIndividualsToPoints2D(individuals []types.Individual) (plotter.XYs, float64, float64) {
+	points := make(plotter.XYs, len(individuals))
+	maxX := math.SmallestNonzeroFloat64
+	maxY := math.SmallestNonzeroFloat64
 	for i := range points {
-		objectiveValues := population[i].Fitness().ObjectiveValues
+		objectiveValues := individuals[i].Fitness().ObjectiveValues
 		points[i].X = objectiveValues[0]
 		points[i].Y = objectiveValues[1]
+		if objectiveValues[0] > maxX {
+			maxX = objectiveValues[0]
+		}
+		if objectiveValues[1] > maxY {
+			maxY = objectiveValues[1]
+		}
 	}
-	return points
+	return points, maxX, maxY
 }
 
 /*

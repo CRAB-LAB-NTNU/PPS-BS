@@ -24,8 +24,8 @@ func constraint3(x types.Genotype, p, q, a, b []float64, k int, f1, f2 float64) 
 func constraint4(x types.Genotype, f1, f2, z float64) float64 {
 	d := 0.25 * math.Pi
 	a := f1*math.Sin(d) + f2*math.Cos(d)
-	b := math.Sin(4*math.Pi*(f1*math.Cos(d)-f2*math.Sin(d))) - z
-	return a - b
+	b := math.Sin(4 * math.Pi * (f1*math.Cos(d) - f2*math.Sin(d)))
+	return a - b - z
 }
 
 func constraint5(x types.Genotype, g, a, b float64) float64 {

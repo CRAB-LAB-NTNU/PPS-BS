@@ -23,8 +23,8 @@ func (m *Moead) PushProblems(j int, y types.Individual) bool {
 func (m *Moead) PullProblems(j int, y types.Individual, eps float64) bool {
 	xF := m.population[j].Fitness()
 	yF := y.Fitness()
-	xCV := maximumConstraintViolation(xF)
-	yCV := maximumConstraintViolation(yF)
+	xCV := constraintViolation(xF)
+	yCV := constraintViolation(yF)
 	xS := tchebycheff(xF.ObjectiveValues, m.IdealPoint, m.Weights[j])
 	yS := tchebycheff(yF.ObjectiveValues, m.IdealPoint, m.Weights[j])
 

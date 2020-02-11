@@ -101,6 +101,7 @@ type Moead struct {
 	CMOP                                                                 types.CMOP
 	WeightNeigbourhoodSize, WeightDistribution, populationSize           int
 	DecisionSize, MaxChangeIndividuals, generation, GenerationMax        int
+	fnEval                                                               int
 	DEDifferentialWeight, CrossoverRate, DistributionIndex, maxViolation float64
 	Weights                                                              []arrays.Vector
 	WeightNeigbourhood                                                   [][]int
@@ -168,11 +169,13 @@ func (m *Moead) Crossover(parents []types.Individual) []types.Individual {
 	child.Repair()
 	return []types.Individual{&child}
 }
-
+func (m Moead) FunctionEvaluations() int {
+	return m.fnEval
+}
 func (m Moead) ConstraintViolation() []float64 {
 	a := make([]float64, m.populationSize)
 	for i, ind := range m.population {
-		a[i] = maximumConstraintViolation(ind.Fitness())
+		a[i] = constraintViolation(ind.Fitness())
 	}
 	return a
 }
@@ -181,8 +184,9 @@ func (m Moead) ConstraintViolation() []float64 {
  */
 func (m *Moead) Evolve(stage types.Stage, eps []float64) {
 	if m.generation%100 == 0 {
-		fmt.Println("Evolving. Generation", m.generation, "stage", stage)
-		fmt.Println("Ideal point:", m.IdealPoint, "\tmaxConstraintViolation:", m.maxViolation)
+		fmt.Println("Evolving")
+		fmt.Println("Generation:", m.generation, "Stage:", stage, "Archive Length:", len(m.Archive), "eps:", eps[m.generation])
+		fmt.Println("Ideal point:", m.IdealPoint, "maxConstraintViolation:", m.maxViolation)
 	}
 
 	for i := 0; i < m.populationSize; i++ {
@@ -197,7 +201,7 @@ func (m *Moead) Evolve(stage types.Stage, eps []float64) {
 		offSpring := m.Crossover([]types.Individual{m.population[i], m.population[hood[x]], m.population[hood[y]]})
 
 		offSpring[0].UpdateFitness(m.CMOP)
-
+		m.fnEval++
 		// Update Ideal
 		f := offSpring[0].Fitness()
 		for j, oType := range f.ObjectiveTypes {
@@ -209,8 +213,8 @@ func (m *Moead) Evolve(stage types.Stage, eps []float64) {
 		}
 
 		// Update max violation
-		if maximumConstraintViolation(f) > m.maxViolation {
-			m.maxViolation = maximumConstraintViolation(f)
+		if constraintViolation(f) > m.maxViolation {
+			m.maxViolation = constraintViolation(f)
 		}
 
 		c := 0
@@ -255,7 +259,7 @@ func ndSelect(archive, population []types.Individual, n int) []types.Individual 
 		q := biooperators.FastNonDominatedSort(feasibleSet)
 		i := 0
 
-		for len(result)+len(q[i]) < n {
+		for len(result)+len(q[i]) < n && i < len(q)-1 {
 			result = append(result, q[i]...)
 			i++
 		}
@@ -269,7 +273,7 @@ func ndSelect(archive, population []types.Individual, n int) []types.Individual 
 		for k, v := range distances {
 			helper = append(helper, sa{k, v})
 		}
-		sort.Slice(helper, func(i, j int) bool { return helper[i].Value < helper[j].Value })
+		sort.Slice(helper, func(i, j int) bool { return helper[i].Value > helper[j].Value })
 
 		for j := 0; j < remaining && j < len(helper); j++ {
 			val := helper[j].Key
@@ -279,17 +283,18 @@ func ndSelect(archive, population []types.Individual, n int) []types.Individual 
 	return result
 }
 
-func maximumConstraintViolation(fitness types.Fitness) float64 {
+func constraintViolation(fitness types.Fitness) float64 {
 	var s float64
 	for _, cValue := range fitness.ConstraintValues {
-		s += math.Abs(math.Min(cValue, 0))
+		if cValue < 0 {
+			s += math.Abs(cValue)
+		}
 	}
-	//fmt.Println(s)
 	return s
 }
 
 func feasible(fitness types.Fitness) bool {
-	return maximumConstraintViolation(fitness) <= 0
+	return constraintViolation(fitness) <= 0
 }
 
 func tchebycheff(objectiveValues, idealPoint []float64, weight arrays.Vector) float64 {
