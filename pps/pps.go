@@ -23,12 +23,7 @@ type PPS struct {
 	SearchingPreference, ConstraintRelaxation, RelaxationReduction float64
 	TC, L                                                          int
 	improvedEpsilon                                                []float64
-	switchPopulation                                               []types.Individual
 	paretoPoints                                                   [][]float64
-}
-
-func (pps PPS) SwitchPopulation() []types.Individual {
-	return pps.switchPopulation
 }
 
 // Initialise initialises the PPS framework with a given CMOP, MOEA and CHM
@@ -66,12 +61,7 @@ func (pps *PPS) Run() {
 		if generation <= pps.TC {
 			if pps.rk <= pps.Epsilon && pps.stage != types.Pull {
 				fmt.Println("Switching stage")
-
 				pps.stage = types.Pull
-
-				pps.switchPopulation = make([]types.Individual, len(pps.Moea.Population()))
-				copy(pps.switchPopulation, pps.Moea.Population())
-
 				pps.improvedEpsilon[generation], pps.improvedEpsilon[0] = pps.Moea.MaxViolation(), pps.Moea.MaxViolation()
 			}
 

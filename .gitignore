@@ -19,3 +19,4 @@ plotter/testdata/*
 goWrite.txt
 test.txt
 graphics*
+**/.DS_Store
