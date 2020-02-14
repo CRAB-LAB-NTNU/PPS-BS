@@ -177,8 +177,8 @@ func UnionPopulations(a, b []types.Individual) []types.Individual {
 	for _, ind := range b {
 		if _, ok := check[ind]; !ok {
 			union = append(union, ind)
-		} else {
 		}
 	}
+
 	return union
 }

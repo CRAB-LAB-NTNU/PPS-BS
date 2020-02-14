@@ -7,5 +7,7 @@ type Plotter interface {
 
 // Plotter2D is a struct incorporating the Plotter interface to plot 2D plots
 type Plotter2D struct {
-	Title, LabelX, LabelY string
+	Title, LabelX, LabelY, Filename string
+	Min, Max                        float64
+	Solution, Extremes              [][]float64
 }

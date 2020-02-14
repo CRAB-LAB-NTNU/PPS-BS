@@ -1,9 +1,21 @@
 package types
 
+import (
+	"reflect"
+	"runtime"
+	"strings"
+)
+
 // CMOP is a interface describing a multi objective optimisation problem
 type CMOP struct {
 	NumberOfObjectives int
 	Calculate          func(Genotype) Fitness
+}
+
+func (c CMOP) Name() string {
+	abs := runtime.FuncForPC(reflect.ValueOf(c.Calculate).Pointer()).Name()
+	split := strings.Split(abs, ".")
+	return split[len(split)-1]
 }
 
 /*
@@ -58,6 +70,9 @@ type MOEA interface {
 	Population() []Individual
 	Initialise()
 	FunctionEvaluations() int
+	FeasibleRatio() float64
+	Ideal() []float64
+	Archive() []Individual
 	Evolve(Stage, []float64)
 	Crossover([]Individual) []Individual
 }

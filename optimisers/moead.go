@@ -2,9 +2,7 @@ package optimisers
 
 import (
 	"fmt"
-	"math"
 	"math/rand"
-	"sort"
 
 	"github.com/CRAB-LAB-NTNU/PPS-BS/biooperators"
 	"github.com/CRAB-LAB-NTNU/PPS-BS/types"
@@ -12,91 +10,10 @@ import (
 	"github.com/CRAB-LAB-NTNU/PPS-BS/arrays"
 )
 
-/*MoeadIndividual is a struct containing information about an individual in the population
-of an evolutionary algorithm.
-*/
-type MoeadIndividual struct {
-	D        int
-	genotype types.Genotype
-	fitness  types.Fitness
-}
-
-func (i *MoeadIndividual) SetGenotype(g []float64) {
-	i.genotype = g
-}
-
-func (i *MoeadIndividual) SetFitness(f types.Fitness) {
-	i.fitness = f
-}
-
-/*Genotype returns the genotype of the individual
- */
-func (i MoeadIndividual) Genotype() types.Genotype {
-	return i.genotype
-}
-
-/*Fitness returnes the fitness value of the individual if it has been calculated
- */
-func (i MoeadIndividual) Fitness() types.Fitness {
-	return i.fitness
-}
-
-/*UpdateFitness updates the fitness value of an individual
- */
-func (i *MoeadIndividual) UpdateFitness(cmop types.CMOP) types.Fitness {
-	i.fitness = cmop.Calculate(i.Genotype())
-	return i.Fitness()
-}
-
-/*InitialiseRandom initialises the individuals genotype with random floats in the range [0,1]
- */
-func (i *MoeadIndividual) InitialiseRandom(cmop types.CMOP) {
-	i.genotype = make([]float64, i.D)
-	for j := 0; j < i.D; j++ {
-		i.genotype[j] = rand.Float64()
-	}
-	i.UpdateFitness(cmop)
-}
-
-func (ind *MoeadIndividual) Repair() {
-	for i := 0; i < ind.D; i++ {
-		if ind.genotype[i] > 1 {
-			ind.genotype[i] = 1
-		} else if ind.genotype[i] < 0 {
-			ind.genotype[i] = 0
-		}
-	}
-}
-
-/*PolynomialMutation performs the mutation described in the
-paper https://reader.elsevier.com/reader/sd/pii/S0045782599003898
-PPS describes a mutation probability of 1/n where n => length of genotype.
-We don't iterate but make a 1/n dice roll to check if we're mutating a single alele.
-*/
-func (i *MoeadIndividual) PolynomialMutation(m float64) {
-	if m < 0 {
-		panic("m needs to be non-negative")
-	}
-
-	if rand.Float64() > 1/float64(i.D) {
-		return
-	}
-
-	u, r, gresk := rand.Float64(), rand.Intn(i.D), 0.0
-
-	if u < 0.5 {
-		gresk = math.Pow(2.0*u, 1.0/(m+1.0))
-	} else {
-		gresk = math.Pow(1.0-(2.0*(1.0-u)), 1.0/(m+1.0))
-	}
-
-	i.genotype[r] += gresk
-}
-
 /*Moead is the struct describing the MOEA/D algorithm.
  */
 type Moead struct {
-	Archive                                                              []types.Individual
+	archive                                                              []types.Individual
 	population                                                           []types.Individual
 	CMOP                                                                 types.CMOP
 	WeightNeigbourhoodSize, WeightDistribution, populationSize           int
@@ -105,11 +22,19 @@ type Moead struct {
 	DEDifferentialWeight, CrossoverRate, DistributionIndex, maxViolation float64
 	Weights                                                              []arrays.Vector
 	WeightNeigbourhood                                                   [][]int
-	IdealPoint                                                           []float64
+	idealPoint                                                           []float64
+}
+
+func (m Moead) Ideal() []float64 {
+	return m.idealPoint
 }
 
 func (m Moead) MaxGeneration() int {
 	return m.GenerationMax
+}
+
+func (m Moead) Archive() []types.Individual {
+	return m.archive
 }
 
 func (m Moead) MaxViolation() float64 {
@@ -126,6 +51,7 @@ func (m *Moead) Initialise() {
 	fmt.Println("Initalising MOEA/D")
 	fmt.Println("Creating weights")
 	m.Weights = arrays.UniformDistributedVectors(m.CMOP.NumberOfObjectives, m.WeightDistribution)
+
 	fmt.Println("Created", len(m.Weights))
 
 	m.populationSize = len(m.Weights)
@@ -134,7 +60,6 @@ func (m *Moead) Initialise() {
 	for i := range m.Weights {
 		m.WeightNeigbourhood = append(m.WeightNeigbourhood, arrays.NearestNeighbour(m.Weights, i, m.WeightNeigbourhoodSize))
 	}
-	//fmt.Println("Weight neighbourhood:", m.WeightNeigbourhood)
 
 	fmt.Println("Generating", m.populationSize, "Individuals")
 	for i := 0; i < m.populationSize; i++ {
@@ -142,11 +67,10 @@ func (m *Moead) Initialise() {
 		ind.InitialiseRandom(m.CMOP)
 		m.population = append(m.population, &ind)
 	}
-	//fmt.Println("Population:", m.Population)
 	fmt.Println("Individuals:", len(m.population))
 	fmt.Println("Calculating Ideal point")
-	m.IdealPoint = biooperators.CalculateIdealPoints(m.population)
-	fmt.Println("Ideal Point:", m.IdealPoint)
+	m.idealPoint = biooperators.CalculateIdealPoints(m.population)
+	fmt.Println("Ideal Point:", m.idealPoint)
 	m.maxViolation = -1
 }
 
@@ -155,8 +79,14 @@ Our MOEA/D is implemented with a single offspring and parents picked from the
 weight neighbourhood.
 */
 func (m *Moead) Crossover(parents []types.Individual) []types.Individual {
+
 	x, a, b := parents[0], parents[1], parents[2]
-	child := MoeadIndividual{D: len(x.Genotype()), genotype: make([]float64, len(x.Genotype()))}
+
+	child := MoeadIndividual{
+		D:        m.DecisionSize,
+		genotype: make([]float64, m.DecisionSize),
+	}
+
 	for i := range child.Genotype() {
 		if rand.Float64() < m.CrossoverRate {
 			child.Genotype()[i] = x.Genotype()[i] + m.DEDifferentialWeight*(a.Genotype()[i]-b.Genotype()[i])
@@ -180,35 +110,49 @@ func (m Moead) ConstraintViolation() []float64 {
 	return a
 }
 
+func (m Moead) FeasibleRatio() float64 {
+	feas, infeas := 0, 0
+	for _, i := range m.population {
+		if feasible(i.Fitness()) {
+			feas++
+		} else {
+			infeas++
+		}
+	}
+	if infeas == 0 {
+		infeas = 1
+	}
+	return float64(feas) / float64(m.populationSize)
+}
+
 /*Evolve performs the genetic operator on all individuals in the population
  */
 func (m *Moead) Evolve(stage types.Stage, eps []float64) {
 	if m.generation%100 == 0 {
 		fmt.Println("Evolving")
-		fmt.Println("Generation:", m.generation, "Stage:", stage, "Archive Length:", len(m.Archive), "eps:", eps[m.generation])
-		fmt.Println("Ideal point:", m.IdealPoint, "maxConstraintViolation:", m.maxViolation)
+		fmt.Println("Generation:", m.generation, "Stage:", stage, "Archive Length:", len(m.archive), "eps:", eps[m.generation])
+		fmt.Println("Ideal point:", m.idealPoint, "maxConstraintViolation:", m.maxViolation)
 	}
-
 	for i := 0; i < m.populationSize; i++ {
 
 		hood := m.selectHood(0.9, i)
 
 		x := rand.Intn(len(hood))
-		if x == 0 {
-			x = 1
+		y := x
+		for y == x {
+			y = rand.Intn(len(hood))
 		}
-		y := rand.Intn(x)
-		offSpring := m.Crossover([]types.Individual{m.population[i], m.population[hood[x]], m.population[hood[y]]})
+		offSpring := m.Crossover([]types.Individual{m.population[i], m.population[hood[x]], m.population[hood[y]]})[0]
 
-		offSpring[0].UpdateFitness(m.CMOP)
+		offSpring.UpdateFitness(m.CMOP)
 		m.fnEval++
 		// Update Ideal
-		f := offSpring[0].Fitness()
+		f := offSpring.Fitness()
 		for j, oType := range f.ObjectiveTypes {
-			if oType == types.Minimisation && f.ObjectiveValues[j] < m.IdealPoint[j] {
-				m.IdealPoint[j] = f.ObjectiveValues[j]
-			} else if oType == types.Maximisation && f.ObjectiveValues[j] > m.IdealPoint[j] {
-				m.IdealPoint[j] = f.ObjectiveValues[j]
+			if oType == types.Minimisation && f.ObjectiveValues[j] < m.idealPoint[j] {
+				m.idealPoint[j] = f.ObjectiveValues[j]
+			} else if oType == types.Maximisation && f.ObjectiveValues[j] > m.idealPoint[j] {
+				m.idealPoint[j] = f.ObjectiveValues[j]
 			}
 		}
 
@@ -218,14 +162,14 @@ func (m *Moead) Evolve(stage types.Stage, eps []float64) {
 		}
 
 		c := 0
-		for c != m.MaxChangeIndividuals && len(hood) > 0 {
+		for c < m.MaxChangeIndividuals && len(hood) > 0 {
 			j := rand.Intn(len(hood))
 			replaced := false
 
 			if stage == types.Push {
-				replaced = m.PushProblems(hood[j], offSpring[0])
+				replaced = m.PushProblems(hood[j], offSpring)
 			} else {
-				replaced = m.PullProblems(hood[j], offSpring[0], eps[m.generation])
+				replaced = m.PullProblems(hood[j], offSpring, eps[m.generation])
 			}
 			if replaced == true {
 				c++
@@ -234,83 +178,87 @@ func (m *Moead) Evolve(stage types.Stage, eps []float64) {
 		}
 	}
 	m.generation++
-	m.Archive = ndSelect(m.Archive, m.population, m.populationSize)
+	m.archive = ndSelect(m.archive, m.population, m.populationSize)
 }
 
-func ndSelect(archive, population []types.Individual, n int) []types.Individual {
-	//fmt.Println("Selecting from archive of length:", len(archive), "and population of length:", len(population))
+func (m *Moead) PushProblems(j int, y types.Individual) bool {
+	xF := m.population[j].Fitness()
+	yF := y.Fitness()
 
-	union := biooperators.UnionPopulations(archive, population)
-	//fmt.Println("Created Union of length", len(union))
+	xS := tchebycheff(xF.ObjectiveValues, m.idealPoint, m.Weights[j])
+	yS := tchebycheff(yF.ObjectiveValues, m.idealPoint, m.Weights[j])
 
-	var feasibleSet []types.Individual
-	feasibleCount := 0
-	var result []types.Individual
+	if yS <= xS {
+		m.population[j] = y
+		return true
+	}
+	return false
+}
 
-	for i, ind := range union {
-		if feasible(ind.Fitness()) {
-			feasibleCount++
-			feasibleSet = append(feasibleSet, union[i])
+func (m *Moead) PullProblems(j int, y types.Individual, eps float64) bool {
+	xF := m.population[j].Fitness()
+	yF := y.Fitness()
+	xCV := constraintViolation(xF)
+	yCV := constraintViolation(yF)
+	xS := tchebycheff(xF.ObjectiveValues, m.idealPoint, m.Weights[j])
+	yS := tchebycheff(yF.ObjectiveValues, m.idealPoint, m.Weights[j])
+
+	if yCV <= eps && xCV <= eps {
+		if yS <= xS {
+			m.population[j] = y
+			return true
+		}
+	} else if yCV == xCV {
+		if yS <= xS {
+			m.population[j] = y
+			return true
+		}
+	} else if yCV < xCV {
+		m.population[j] = y
+		return true
+	}
+
+	return false
+}
+
+func (m Moead) selectHood(pr float64, i int) []int {
+	if rand.Float64() < pr {
+		hood := make([]int, m.WeightNeigbourhoodSize)
+		copy(hood, m.WeightNeigbourhood[i])
+		return hood
+	}
+	hood := make([]int, m.populationSize)
+	for i := range hood {
+		hood[i] = i
+	}
+	return hood
+}
+
+func (m Moead) PopulationCentroid() []float64 {
+	c := make([]float64, len(m.Population()[0].Genotype()))
+	for _, ind := range m.Population() {
+		for j := range ind.Genotype() {
+			c[j] += ind.Genotype()[j]
 		}
 	}
-	if feasibleCount <= n {
-		result = feasibleSet
-	} else {
-		q := biooperators.FastNonDominatedSort(feasibleSet)
-		i := 0
-
-		for len(result)+len(q[i]) < n && i < len(q)-1 {
-			result = append(result, q[i]...)
-			i++
-		}
-		remaining := n - len(result)
-		distances := biooperators.CrowdingDistance(q[i])
-		type sa struct {
-			Key   int
-			Value float64
-		}
-		var helper []sa
-		for k, v := range distances {
-			helper = append(helper, sa{k, v})
-		}
-		sort.Slice(helper, func(i, j int) bool { return helper[i].Value > helper[j].Value })
-
-		for j := 0; j < remaining && j < len(helper); j++ {
-			val := helper[j].Key
-			result = append(result, q[i][val])
-		}
+	for j := range c {
+		c[j] = c[j] / float64(m.populationSize)
 	}
-	return result
+	return c
 }
 
-func constraintViolation(fitness types.Fitness) float64 {
-	var s float64
-	for _, cValue := range fitness.ConstraintValues {
-		if cValue < 0 {
-			s += math.Abs(cValue)
+func (m Moead) OppositePopulation() []types.Individual {
+	var pop []types.Individual
+	centroid := m.PopulationCentroid()
+	for _, ind := range m.Population() {
+		d := len(ind.Genotype())
+		oppositeInd := MoeadIndividual{D: d, genotype: make([]float64, d)}
+		for j := range oppositeInd.genotype {
+			oppositeInd.genotype[j] = 2*centroid[j] - ind.Genotype()[j]
 		}
+		oppositeInd.Repair()
+		oppositeInd.UpdateFitness(m.CMOP)
+		pop = append(pop, &oppositeInd)
 	}
-	return s
-}
-
-func feasible(fitness types.Fitness) bool {
-	return constraintViolation(fitness) <= 0
-}
-
-func tchebycheff(objectiveValues, idealPoint []float64, weight arrays.Vector) float64 {
-	var max float64 = math.SmallestNonzeroFloat64
-	for i := range objectiveValues {
-		// Original MOAD/D uses w(f-z)
-		// PPS on the other hand uses 1/w * (f-z)
-		// Using the formula from PPS.
-		v := 1 / weight.Get(i) * (math.Abs(objectiveValues[i] - idealPoint[i]))
-		if max < v {
-			max = v
-		}
-	}
-	return max
-}
-
-func Tchebycheff(objectiveValues, idealPoint []float64, weight arrays.Vector) float64 {
-	return tchebycheff(objectiveValues, idealPoint, weight)
+	return pop
 }
