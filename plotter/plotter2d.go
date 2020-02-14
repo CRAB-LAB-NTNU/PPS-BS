@@ -25,7 +25,7 @@ func (plotter2d *Plotter2D) Plot(pops ...[]types.Individual) {
 
 	p.Title.Text = plotter2d.Title
 	p.X.Label.Text = plotter2d.LabelX
-	p.X.Label.Text = plotter2d.LabelY
+	p.Y.Label.Text = plotter2d.LabelY
 
 	p.X.Max = plotter2d.Max
 	p.X.Min = plotter2d.Min
