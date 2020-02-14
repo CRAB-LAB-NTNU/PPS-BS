@@ -1,23 +1,40 @@
 package pps
 
-import "math"
+import (
+	"fmt"
+	"log"
+	"math"
+	"os"
+	"os/exec"
+	"strconv"
+
+	"github.com/CRAB-LAB-NTNU/PPS-BS/biooperators"
+	"github.com/CRAB-LAB-NTNU/PPS-BS/plotter"
+	"github.com/CRAB-LAB-NTNU/PPS-BS/types"
+)
+
+// PPS is a struct describing the contents of the Push & Pull Framework
+type PPS struct {
+	Cmop                                                           types.CMOP
+	Moea                                                           types.MOEA
+	stage                                                          types.Stage
+	idealPoints, nadirPoints                                       [][]float64
+	rk, Delta, Epsilon                                             float64
+	SearchingPreference, ConstraintRelaxation, RelaxationReduction float64
+	TC, L                                                          int
+	improvedEpsilon                                                []float64
+	paretoPoints                                                   [][]float64
+}
 
 // Initialise initialises the PPS framework with a given CMOP, MOEA and CHM
-func (pps *PPS) Initialise(cmop CMOP, moea MOEA, TC int, delta, epsilon float64) {
-	pps.Cmop = cmop
-	pps.Moea = moea
-
-	pps.TC = TC
-	pps.Delta = delta
-	pps.Epsilon = epsilon
-
-	pps.RK = 1.0
-	pps.Stage = Push
-
-	pps.Moea.InitialisePopulation()
-
-	pps.IdealPoints = generateEmpty2DSliceFloat64(pps.Moea.MaxGeneration(), pps.Cmop.NumberOfObjectives())
-	pps.NadirPoints = generateEmpty2DSliceFloat64(pps.Moea.MaxGeneration(), pps.Cmop.NumberOfObjectives())
+func (pps *PPS) Initialise() {
+	pps.improvedEpsilon = make([]float64, pps.Moea.MaxGeneration())
+	pps.Moea.Initialise()
+	pps.idealPoints = generateEmpty2DSliceFloat64(pps.Moea.MaxGeneration(), pps.Cmop.NumberOfObjectives)
+	pps.nadirPoints = generateEmpty2DSliceFloat64(pps.Moea.MaxGeneration(), pps.Cmop.NumberOfObjectives)
+	pps.rk = 1.0
+	pps.stage = types.Push
+	pps.paretoPoints = plotter.ParseDatFile("arraydata/pf_data/" + pps.Cmop.Name() + ".dat")
 }
 
 func generateEmpty2DSliceFloat64(outerLength, innerLength int) [][]float64 {
@@ -28,88 +45,119 @@ func generateEmpty2DSliceFloat64(outerLength, innerLength int) [][]float64 {
 	return slice
 }
 
-func (pps *PPS) run() {
-	for generation := 0; generation < pps.Moea.MaxGeneration(); generation++ {
+func (pps *PPS) Run() {
+	fmt.Println("Solving", pps.Cmop.Name())
+	for generation := 0; pps.Moea.FunctionEvaluations() < pps.Moea.MaxGeneration(); generation++ {
 
 		// First we set the ideal and nadir points for this generation based on the current population
-		pps.SetIdealAndNadirPoints(pps.Moea.Population(), generation)
+		ip, np := biooperators.CalculateNadirAndIdealPoints(pps.Moea.Population())
+		pps.idealPoints[generation] = ip
+		pps.nadirPoints[generation] = np
+
 		if generation >= pps.L {
 			pps.CalculateMaxChange(generation)
 		}
 		// If the change in ideal or nadir points is lower than a user defined value then we change phases
-		if pps.RK <= pps.Epsilon {
-			pps.Stage = Pull
+		if generation <= pps.TC {
+			if pps.rk <= pps.Epsilon && pps.stage != types.Pull {
+				fmt.Println("Switching stage")
+				pps.stage = types.Pull
+				pps.improvedEpsilon[generation], pps.improvedEpsilon[0] = pps.Moea.MaxViolation(), pps.Moea.MaxViolation()
+			}
+
+			if pps.stage == types.Pull {
+				pps.updateEpsilon(generation)
+			}
+		} else {
+			pps.improvedEpsilon[generation] = 0
 		}
 
 		// We evolve the population one generation
 		// How this is done will depend on the underlying moea and constraint-handling method
-		pps.Moea.Evolve(pps.Stage)
-
+		pps.Moea.Evolve(pps.stage, pps.improvedEpsilon)
+		pps.plot(generation)
 	}
 }
 
-//SetIdealAndNadirPoints sets the ideal and nadir points for the given generation
-//This is done by first setting the ideal and nadir values to either max or min based on if the problem is a maximisation or minimisation problem.
-//Then for each objective the value of the individual is checked to see if either the nadir or ideal point for the generation can be updated
-func (pps *PPS) SetIdealAndNadirPoints(population []Individual, generation int) {
-	// First set ideal and nadir points to best possible or worst possible values
-	// based on if the objective is aoptimisation objective or minimisation objective
+func (pps *PPS) updateEpsilon(k int) {
 
-	for objectiveNr, objective := range pps.Cmop.Objectives() {
-
-		switch objective.Type {
-		case Minimisation:
-			pps.IdealPoints[generation][objectiveNr] = math.MaxFloat64
-			pps.NadirPoints[generation][objectiveNr] = math.SmallestNonzeroFloat64
-		case Maximisation:
-			pps.IdealPoints[generation][objectiveNr] = math.SmallestNonzeroFloat64
-			pps.NadirPoints[generation][objectiveNr] = math.MaxFloat64
-		}
-
-		//TODO: Might have to redo the structure of how objective values are calculated
-		for _, individual := range pps.Moea.Population() {
-			for objectiveNr, objective := range pps.Cmop.Objectives() {
-				objectiveValue := objective.Function(individual)
-				idealPoint := pps.IdealPoints[generation][objectiveNr]
-				nadirPoint := pps.NadirPoints[generation][objectiveNr]
-
-				switch objective.Type {
-				case Minimisation:
-					if objectiveValue < idealPoint {
-						idealPoint = objectiveValue
-					} else if objectiveValue > nadirPoint {
-						nadirPoint = objectiveValue
-					}
-				case Maximisation:
-					if objectiveValue > idealPoint {
-						idealPoint = objectiveValue
-					} else if objectiveValue < nadirPoint {
-						nadirPoint = objectiveValue
-					}
-				}
-			}
-		}
+	if pps.Moea.FeasibleRatio() < pps.SearchingPreference {
+		pps.improvedEpsilon[k] = (1 - pps.ConstraintRelaxation) * pps.improvedEpsilon[k-1]
+	} else {
+		pps.improvedEpsilon[k] = pps.improvedEpsilon[0] * math.Pow((1-(float64(k)/float64(pps.Moea.MaxGeneration()))), pps.RelaxationReduction)
 	}
+
 }
 
 // CalculateMaxChange Calculates the max change in ideal or nadir points
 // Loops through each objective for the generation and finds the larges change from a previous generation.
 func (pps *PPS) CalculateMaxChange(generation int) {
-	maxChangeIdeal, maxChangeNadir := math.SmallestNonzeroFloat64, math.SmallestNonzeroFloat64
-	for objectiveNr := range pps.Cmop.Objectives() {
-		currentIdealPoint := pps.IdealPoints[generation][objectiveNr]
-		currentNadirPoint := pps.NadirPoints[generation][objectiveNr]
-		intervalIdealPoint := pps.IdealPoints[generation-pps.L][objectiveNr]
-		intervalNadirPoint := pps.NadirPoints[generation-pps.L][objectiveNr]
+	rz := pps.rx(generation, pps.idealPoints)
+	rn := pps.rx(generation, pps.nadirPoints)
+	pps.rk = math.Max(rz, rn)
+}
 
-		changeIdeal := math.Abs(currentIdealPoint-intervalIdealPoint) / math.Max(math.Abs(intervalIdealPoint), pps.Delta)
-		changeNadir := math.Abs(currentNadirPoint-intervalNadirPoint) / math.Max(math.Abs(intervalNadirPoint), pps.Delta)
-		if changeIdeal > maxChangeIdeal {
-			maxChangeIdeal = changeIdeal
-		}
-		if changeNadir > maxChangeNadir {
-			maxChangeNadir = changeNadir
+func (pps PPS) rx(k int, points [][]float64) float64 {
+	m := math.SmallestNonzeroFloat64
+	for i := 0; i < pps.Cmop.NumberOfObjectives; i++ {
+		cur := points[k][i]
+		offset := points[k-pps.L][i]
+		dist := math.Abs(cur - offset)
+		if calc := dist / math.Max(math.Abs(offset), pps.Delta); calc > m {
+			m = calc
 		}
 	}
-	pps.RK = math.Max(maxChangeIdeal, maxChangeNadir)
+	return m
+}
+
+func (pps PPS) plot(generation int) {
+
+	gen := strconv.Itoa(generation)
+	eps := strconv.FormatFloat(pps.improvedEpsilon[generation], 'E', -1, 64)
+	prob := pps.Cmop.Name()
+	var stage string
+	if pps.stage == types.Push {
+		stage = "PUSH"
+	} else {
+		stage = "PULL"
+	}
+
+	path := "graphics/gif/" + prob
+
+	if err := os.MkdirAll(path, 0755); err != nil {
+		log.Fatal(err)
+	}
+
+	plotter := plotter.Plotter2D{
+		Title:    prob + " Stage: " + stage + " gen: " + gen + " eps: " + eps,
+		LabelX:   "f1",
+		LabelY:   "f2",
+		Min:      0,
+		Max:      3,
+		Filename: path + "/" + gen + ".png",
+		Solution: pps.paretoPoints,
+		Extremes: [][]float64{pps.idealPoints[generation], pps.nadirPoints[generation], pps.Moea.Ideal()},
+	}
+	plotter.Plot(pps.Moea.Population(), pps.Moea.Archive())
+}
+
+func (pps PPS) ExportVideo() {
+	prob := pps.Cmop.Name()
+	path := "graphics/vids/"
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		fmt.Println("path eksisterer ikke, produserer.")
+		os.MkdirAll(path, 0755)
+	}
+
+	if err := os.Remove(path + prob + ".mp4"); err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Println("Removed old file.")
+	}
+
+	cmd := exec.Command("ffmpeg", "-framerate", "20", "-i", "./graphics/gif/"+prob+"/%00d.png", "./graphics/vids/"+prob+".mp4")
+	if err := cmd.Run(); err != nil {
+		fmt.Println("Feil ved laging av video")
+		log.Fatal(err)
+	}
 }
