@@ -146,12 +146,11 @@ func (m *Moead) Evolve(stage types.Stage, eps []float64) {
 
 		offSpring.UpdateFitness(m.CMOP)
 		m.fnEval++
+
 		// Update Ideal
 		f := offSpring.Fitness()
-		for j, oType := range f.ObjectiveTypes {
-			if oType == types.Minimisation && f.ObjectiveValues[j] < m.idealPoint[j] {
-				m.idealPoint[j] = f.ObjectiveValues[j]
-			} else if oType == types.Maximisation && f.ObjectiveValues[j] > m.idealPoint[j] {
+		for j, val := range f.ObjectiveValues {
+			if val < m.idealPoint[j] {
 				m.idealPoint[j] = f.ObjectiveValues[j]
 			}
 		}

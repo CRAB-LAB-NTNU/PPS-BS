@@ -26,16 +26,6 @@ type Objective struct {
 }
 */
 
-// ObjectiveType says if the objective is a minimisation or maximisation problem
-type ObjectiveType int
-
-const (
-	// Minimisation the objective is a minimisation problem
-	Minimisation ObjectiveType = iota + 1
-	// Maximisation the objective is a maximisation problem
-	Maximisation
-)
-
 /*
 // ObjectiveFunction describes the function for maximisation or minimisation for an objective
 type ObjectiveFunction func(Genotype) float64
@@ -96,7 +86,6 @@ type Fitness struct {
 type Fitness struct {
 	ObjectiveCount, ConstraintCount   int
 	ObjectiveValues, ConstraintValues []float64
-	ObjectiveTypes                    []ObjectiveType
 	ConstraintTypes                   []ConstraintType
 }
 

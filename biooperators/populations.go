@@ -15,18 +15,12 @@ func CalculateIdealPoints(population []types.Individual) []float64 {
 	oc := population[0].Fitness().ObjectiveCount
 	point := make([]float64, oc)
 	for i := 0; i < oc; i++ {
-		if population[0].Fitness().ObjectiveTypes[i] == types.Minimisation {
-			point[i] = math.MaxFloat64
-		} else {
-			point[i] = math.SmallestNonzeroFloat64
-		}
+		point[i] = math.MaxFloat64
 	}
 	for _, ind := range population {
 		fitness := ind.Fitness()
 		for j := 0; j < fitness.ObjectiveCount; j++ {
-			if fitness.ObjectiveTypes[j] == types.Minimisation && fitness.ObjectiveValues[j] < point[j] {
-				point[j] = fitness.ObjectiveValues[j]
-			} else if fitness.ObjectiveTypes[j] == types.Maximisation && fitness.ObjectiveValues[j] > point[j] {
+			if fitness.ObjectiveValues[j] < point[j] {
 				point[j] = fitness.ObjectiveValues[j]
 			}
 		}
@@ -38,18 +32,12 @@ func CalculateNadirPoints(population []types.Individual) []float64 {
 	oc := population[0].Fitness().ObjectiveCount
 	point := make([]float64, oc)
 	for i := 0; i < oc; i++ {
-		if population[0].Fitness().ObjectiveTypes[i] == types.Minimisation {
-			point[i] = math.SmallestNonzeroFloat64
-		} else {
-			point[i] = math.MaxFloat64
-		}
+		point[i] = math.SmallestNonzeroFloat64
 	}
 	for _, ind := range population {
 		fitness := ind.Fitness()
 		for j := 0; j < fitness.ObjectiveCount; j++ {
-			if fitness.ObjectiveTypes[j] == types.Minimisation && fitness.ObjectiveValues[j] > point[j] {
-				point[j] = fitness.ObjectiveValues[j]
-			} else if fitness.ObjectiveTypes[j] == types.Maximisation && fitness.ObjectiveValues[j] < point[j] {
+			if fitness.ObjectiveValues[j] > point[j] {
 				point[j] = fitness.ObjectiveValues[j]
 			}
 		}
@@ -108,15 +96,9 @@ func FastNonDominatedSort(population []types.Individual) [][]types.Individual {
 
 func Dominates(p, q types.Individual) bool {
 	qf, pf := q.Fitness(), p.Fitness()
-	for i, oType := range qf.ObjectiveTypes {
-		if oType == types.Minimisation {
-			if qf.ObjectiveValues[i] < pf.ObjectiveValues[i] {
-				return false
-			}
-		} else {
-			if qf.ObjectiveValues[i] > pf.ObjectiveValues[i] {
-				return false
-			}
+	for i := range qf.ObjectiveValues {
+		if qf.ObjectiveValues[i] < pf.ObjectiveValues[i] {
+			return false
 		}
 	}
 	return true
