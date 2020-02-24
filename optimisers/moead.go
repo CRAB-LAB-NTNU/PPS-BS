@@ -2,6 +2,8 @@ package optimisers
 
 import (
 	"fmt"
+	"log"
+	"math"
 	"math/rand"
 
 	"github.com/CRAB-LAB-NTNU/PPS-BS/biooperators"
@@ -23,6 +25,7 @@ type Moead struct {
 	Weights                                                              []arrays.Vector
 	WeightNeigbourhood                                                   [][]int
 	idealPoint                                                           []float64
+	binaryPairs                                                          []int
 }
 
 func (m Moead) Ideal() []float64 {
@@ -44,33 +47,34 @@ func (m Moead) Population() []types.Individual {
 	return m.population
 }
 
+func (m *Moead) Reset() {
+	m.archive = []types.Individual{}
+	m.population = []types.Individual{}
+	m.generation = 0
+	m.fnEval = 0
+	m.Weights = []arrays.Vector{}
+	m.WeightNeigbourhood = [][]int{}
+	m.idealPoint = []float64{}
+}
+
 /*Initialise initialises the MOEA/D by calculating the weights, weight neighbourhood,
 population and ideal point.
 */
 func (m *Moead) Initialise() {
-	fmt.Println("Initalising MOEA/D")
-	fmt.Println("Creating weights")
 	m.Weights = arrays.UniformDistributedVectors(m.CMOP.NumberOfObjectives, m.WeightDistribution)
-
-	fmt.Println("Created", len(m.Weights))
 
 	m.populationSize = len(m.Weights)
 
-	fmt.Println("Calculating weight neighbourhood")
 	for i := range m.Weights {
 		m.WeightNeigbourhood = append(m.WeightNeigbourhood, arrays.NearestNeighbour(m.Weights, i, m.WeightNeigbourhoodSize))
 	}
 
-	fmt.Println("Generating", m.populationSize, "Individuals")
 	for i := 0; i < m.populationSize; i++ {
 		ind := MoeadIndividual{D: m.DecisionSize}
 		ind.InitialiseRandom(m.CMOP)
 		m.population = append(m.population, &ind)
 	}
-	fmt.Println("Individuals:", len(m.population))
-	fmt.Println("Calculating Ideal point")
 	m.idealPoint = biooperators.CalculateIdealPoints(m.population)
-	fmt.Println("Ideal Point:", m.idealPoint)
 	m.maxViolation = -1
 }
 
@@ -111,42 +115,34 @@ func (m Moead) ConstraintViolation() []float64 {
 }
 
 func (m Moead) FeasibleRatio() float64 {
-	feas, infeas := 0, 0
+	feas := 0
 	for _, i := range m.population {
 		if feasible(i.Fitness()) {
 			feas++
-		} else {
-			infeas++
 		}
 	}
-	if infeas == 0 {
-		infeas = 1
-	}
+
 	return float64(feas) / float64(m.populationSize)
 }
 
 /*Evolve performs the genetic operator on all individuals in the population
  */
 func (m *Moead) Evolve(stage types.Stage, eps []float64) {
-	if m.generation%100 == 0 {
-		fmt.Println("Evolving")
-		fmt.Println("Generation:", m.generation, "Stage:", stage, "Archive Length:", len(m.archive), "eps:", eps[m.generation])
-		fmt.Println("Ideal point:", m.idealPoint, "maxConstraintViolation:", m.maxViolation)
+
+	if m.generation%10 == 0 {
+		fmt.Println(m.generation /*, arrays.Sum(m.ConstraintViolation())*/)
 	}
+
 	for i := 0; i < m.populationSize; i++ {
-
 		hood := m.selectHood(0.9, i)
-
 		x := rand.Intn(len(hood))
 		y := x
 		for y == x {
 			y = rand.Intn(len(hood))
 		}
 		offSpring := m.Crossover([]types.Individual{m.population[i], m.population[hood[x]], m.population[hood[y]]})[0]
-
 		offSpring.UpdateFitness(m.CMOP)
 		m.fnEval++
-
 		// Update Ideal
 		f := offSpring.Fitness()
 		for j, val := range f.ObjectiveValues {
@@ -154,17 +150,14 @@ func (m *Moead) Evolve(stage types.Stage, eps []float64) {
 				m.idealPoint[j] = f.ObjectiveValues[j]
 			}
 		}
-
 		// Update max violation
 		if constraintViolation(f) > m.maxViolation {
 			m.maxViolation = constraintViolation(f)
 		}
-
 		c := 0
 		for c < m.MaxChangeIndividuals && len(hood) > 0 {
 			j := rand.Intn(len(hood))
 			replaced := false
-
 			if stage == types.Push {
 				replaced = m.PushProblems(hood[j], offSpring)
 			} else {
@@ -176,6 +169,7 @@ func (m *Moead) Evolve(stage types.Stage, eps []float64) {
 			hood = arrays.Remove(hood, j)
 		}
 	}
+
 	m.generation++
 	m.archive = ndSelect(m.archive, m.population, m.populationSize)
 }
@@ -231,6 +225,65 @@ func (m Moead) selectHood(pr float64, i int) []int {
 		hood[i] = i
 	}
 	return hood
+}
+
+func (m *Moead) binarySearch(indices []int, surrogate []types.Individual, eps float64) {
+	if len(indices) != len(surrogate) {
+		log.Fatal("INDICES AND SURROGATE NOT EQUAL LENGTH")
+	}
+	for i, p := range m.population {
+		pair := surrogate[indices[i]]
+		middlePoint := arrays.Middle(p.Genotype(), pair.Genotype())
+		ind := MoeadIndividual{D: len(p.Genotype())}
+		ind.SetGenotype(middlePoint)
+		ind.Repair()
+		ind.UpdateFitness(m.CMOP)
+		m.fnEval++
+		m.PullProblems(i, &ind, eps)
+	}
+}
+
+func (m Moead) selectRandomPairs() []int {
+	indices := make([]int, len(m.population))
+	for i := range m.population {
+		indices[i] = rand.Intn(len(m.archive))
+	}
+	return indices
+}
+
+func (m Moead) selectClosestPairs() []int {
+	indices := make([]int, len(m.population))
+	for i, p := range m.population {
+		smallest := math.MaxFloat64
+		flag := -1
+		for j, a := range m.archive {
+			dist := arrays.EuclideanDistance(p.Fitness().ObjectiveValues, a.Fitness().ObjectiveValues)
+			if dist < smallest {
+				flag = j
+				smallest = dist
+			}
+		}
+		indices[i] = flag
+	}
+	return indices
+}
+
+func (m Moead) selectFurthestPairs() []int {
+	indices := make([]int, len(m.population))
+	for i, p := range m.population {
+		smallest := math.SmallestNonzeroFloat64
+		for j, a := range m.population {
+			if arrays.Includes(indices, j) {
+				continue
+			}
+			dist := arrays.EuclideanDistance(p.Fitness().ObjectiveValues, a.Fitness().ObjectiveValues)
+			if dist > smallest {
+				indices[i] = j
+				smallest = dist
+			}
+		}
+	}
+	return indices
 }
 
 func (m Moead) PopulationCentroid() []float64 {

@@ -61,6 +61,7 @@ type MOEA interface {
 	Initialise()
 	FunctionEvaluations() int
 	FeasibleRatio() float64
+	Reset()
 	Ideal() []float64
 	Archive() []Individual
 	Evolve(Stage, []float64)
