@@ -164,3 +164,11 @@ func NearestNeighbour(arr []Vector, i, T int) []int {
 
 	return neighbourIndexes
 }
+
+func Middle(a, b []float64) []float64 {
+	middle := make([]float64, len(a))
+	for i := range a {
+		middle[i] = (a[i] + b[i]) / 2
+	}
+	return middle
+}

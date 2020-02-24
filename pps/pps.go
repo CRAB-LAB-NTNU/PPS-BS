@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"github.com/CRAB-LAB-NTNU/PPS-BS/biooperators"
+	"github.com/CRAB-LAB-NTNU/PPS-BS/configs"
 	"github.com/CRAB-LAB-NTNU/PPS-BS/plotter"
 	"github.com/CRAB-LAB-NTNU/PPS-BS/types"
 )
@@ -18,12 +19,18 @@ type PPS struct {
 	Cmop                                                           types.CMOP
 	Moea                                                           types.MOEA
 	stage                                                          types.Stage
-	idealPoints, nadirPoints                                       [][]float64
+	idealPoints, nadirPoints, paretoPoints                         [][]float64
 	rk, Delta, Epsilon                                             float64
 	SearchingPreference, ConstraintRelaxation, RelaxationReduction float64
 	TC, L                                                          int
 	improvedEpsilon                                                []float64
-	paretoPoints                                                   [][]float64
+	Config                                                         configs.PPS
+	Result                                                         types.Results
+}
+
+func (pps *PPS) Reset() {
+	pps.Moea.Reset()
+	pps.Initialise()
 }
 
 // Initialise initialises the PPS framework with a given CMOP, MOEA and CHM
@@ -34,7 +41,11 @@ func (pps *PPS) Initialise() {
 	pps.nadirPoints = generateEmpty2DSliceFloat64(pps.Moea.MaxGeneration(), pps.Cmop.NumberOfObjectives)
 	pps.rk = 1.0
 	pps.stage = types.Push
-	pps.paretoPoints = plotter.ParseDatFile("arraydata/pf_data/" + pps.Cmop.Name() + ".dat")
+	if points, err := plotter.ParseDatFile("arraydata/pf_data/" + pps.Cmop.Name() + ".dat"); err == nil {
+		pps.paretoPoints = points
+	} else {
+		fmt.Println("ERROR", err)
+	}
 }
 
 func generateEmpty2DSliceFloat64(outerLength, innerLength int) [][]float64 {
@@ -45,8 +56,7 @@ func generateEmpty2DSliceFloat64(outerLength, innerLength int) [][]float64 {
 	return slice
 }
 
-func (pps *PPS) Run() {
-	fmt.Println("Solving", pps.Cmop.Name())
+func (pps *PPS) Run() float64 {
 	for generation := 0; pps.Moea.FunctionEvaluations() < pps.Moea.MaxGeneration(); generation++ {
 
 		// First we set the ideal and nadir points for this generation based on the current population
@@ -60,12 +70,9 @@ func (pps *PPS) Run() {
 		// If the change in ideal or nadir points is lower than a user defined value then we change phases
 		if generation <= pps.TC {
 			if pps.rk <= pps.Epsilon && pps.stage != types.Pull {
-				fmt.Println("Switching stage")
 				pps.stage = types.Pull
 				pps.improvedEpsilon[generation], pps.improvedEpsilon[0] = pps.Moea.MaxViolation(), pps.Moea.MaxViolation()
-			}
-
-			if pps.stage == types.Pull {
+			} else if pps.stage == types.Pull {
 				pps.updateEpsilon(generation)
 			}
 		} else {
@@ -75,12 +82,29 @@ func (pps *PPS) Run() {
 		// We evolve the population one generation
 		// How this is done will depend on the underlying moea and constraint-handling method
 		pps.Moea.Evolve(pps.stage, pps.improvedEpsilon)
-		pps.plot(generation)
+		if pps.Config.ExportVideo {
+			pps.plot(generation)
+		}
 	}
+	if pps.Config.ExportVideo {
+		pps.ExportVideo()
+	}
+
+	return pps.Performance()
+}
+
+func (pps PPS) RunTest() {
+	for i := 0; i < pps.Config.Runs; i++ {
+		pps.Result.Add(pps.Run())
+		pps.Reset()
+	}
+	fmt.Println("Values", pps.Result.Values())
+	fmt.Println("MEAN:", pps.Result.Mean())
+	fmt.Println("Variance:", pps.Result.Variance())
+	fmt.Println("Mean:", pps.Result.StandardDeviation())
 }
 
 func (pps *PPS) updateEpsilon(k int) {
-
 	if pps.Moea.FeasibleRatio() < pps.SearchingPreference {
 		pps.improvedEpsilon[k] = (1 - pps.ConstraintRelaxation) * pps.improvedEpsilon[k-1]
 	} else {
@@ -132,8 +156,8 @@ func (pps PPS) plot(generation int) {
 		Title:    prob + " Stage: " + stage + " gen: " + gen + " eps: " + eps,
 		LabelX:   "f1",
 		LabelY:   "f2",
-		Min:      0,
-		Max:      3,
+		Min:      pps.Config.VideoMin,
+		Max:      pps.Config.VideoMax,
 		Filename: path + "/" + gen + ".png",
 		Solution: pps.paretoPoints,
 		Extremes: [][]float64{pps.idealPoints[generation], pps.nadirPoints[generation], pps.Moea.Ideal()},
@@ -160,4 +184,8 @@ func (pps PPS) ExportVideo() {
 		fmt.Println("Feil ved laging av video")
 		log.Fatal(err)
 	}
+}
+
+func (pps PPS) Performance() float64 {
+	return pps.Config.Metric(pps.Moea.Archive(), pps.paretoPoints)
 }

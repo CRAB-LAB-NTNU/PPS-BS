@@ -2,6 +2,7 @@ package plotter
 
 import (
 	"bufio"
+	"fmt"
 	"image/color"
 	"log"
 	"math"
@@ -101,10 +102,11 @@ func convertIndividualsToPoints2D(individuals []types.Individual, max float64) p
 	return points
 }
 
-func ParseDatFile(path string) [][]float64 {
+func ParseDatFile(path string) ([][]float64, error) {
 	var bucket [][]float64
 	if file, err := os.Open(path); err != nil {
-		log.Fatal(err)
+		fmt.Println("Error :)")
+		return nil, err
 	} else {
 		defer file.Close()
 		scanner := bufio.NewScanner(file)
@@ -121,8 +123,8 @@ func ParseDatFile(path string) [][]float64 {
 			}
 			bucket = append(bucket, point)
 		}
+		return bucket, nil
 	}
-	return bucket
 }
 
 func ParseFloat(str string) (float64, error) {
