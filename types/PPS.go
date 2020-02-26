@@ -5,7 +5,9 @@ type Stage int
 
 const (
 	// Push PPS is in the push stage and constraints are ignored
-	Push Stage = iota + 1
+	Push Stage = iota
+	// BorderSearch PPS is in the stage between Push and Pull
+	BorderSearch Stage = iota
 	// Pull PPS is in the pull stage and constraints are handled
-	Pull
+	Pull Stage = iota
 )

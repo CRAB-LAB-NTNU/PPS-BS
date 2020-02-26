@@ -1,6 +1,7 @@
 package testSuite
 
 import (
+	"fmt"
 	"math"
 
 	"github.com/CRAB-LAB-NTNU/PPS-BS/types"
@@ -236,5 +237,41 @@ func CMOP14(x types.Genotype) types.Fitness {
 		constraint5(x, g, 3.61, 3.24),
 		constraint5(x, g, 3.0625, 2.56),
 	}
+	return fitness
+}
+
+func RobotGripper(x types.Genotype) types.Fitness {
+	fitness := types.Fitness{
+		ObjectiveCount: 2, ConstraintCount: 7,
+		ConstraintTypes: []types.ConstraintType{
+			types.EqualsOrGreaterThanZero,
+			types.EqualsOrGreaterThanZero,
+			types.EqualsOrGreaterThanZero,
+			types.EqualsOrGreaterThanZero,
+			types.EqualsOrGreaterThanZero,
+			types.EqualsOrGreaterThanZero,
+			types.EqualsOrGreaterThanZero,
+		},
+	}
+	converted := convertGenotype(x)
+	fuzzyTest(converted)
+	fmt.Println(converted)
+	yMin, yG, yMax, zMax, P := 50.0, 150.0, 100.0, 100.0, 100.0
+
+	fitness.ObjectiveValues = []float64{
+		robotObjective1(converted, zMax, P),
+		robotObjective2(converted),
+	}
+
+	fitness.ConstraintValues = []float64{
+		robotConstraint1(converted, yMin, zMax),
+		robotConstraint2(converted, zMax),
+		robotConstraint3(converted, yMax),
+		robotConstraint4(converted, yG),
+		robotConstraint5(converted),
+		robotConstraint6(converted, zMax),
+		robotConstraint7(converted, zMax),
+	}
+
 	return fitness
 }

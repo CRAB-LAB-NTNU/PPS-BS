@@ -64,8 +64,9 @@ type MOEA interface {
 	Reset()
 	Ideal() []float64
 	Archive() []Individual
-	Evolve(Stage, []float64)
-	Crossover([]Individual) []Individual
+	Evolve(Stage, bool, []float64)
+	ResetBinary()
+	IsBinarySearch() bool
 }
 
 // Individual is an interface describing an individual in a population
@@ -73,6 +74,7 @@ type Individual interface {
 	Genotype() Genotype //TODO: se på måter å gjøre dette mer generelt senere
 	Fitness() Fitness
 	UpdateFitness(CMOP) Fitness
+	Copy() Individual
 	//Mutate()
 	//ConstraintViolation()
 	//UpdateConstraintViolation()

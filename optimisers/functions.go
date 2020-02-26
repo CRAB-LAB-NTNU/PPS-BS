@@ -55,6 +55,22 @@ func ndSelect(archive, population []types.Individual, n int) []types.Individual 
 	return result
 }
 
+func selectBinaryResult(archive, population []types.Individual, n int) []types.Individual {
+	var result []types.Individual
+	var feasibleCount int
+	for _, ind := range archive {
+		if feasible(ind.Fitness()) {
+			result = append(result, ind)
+			feasibleCount++
+		}
+	}
+	rest := n - len(result)
+	for i := 0; i < rest; i++ {
+		result = append(result, population[i])
+	}
+	return result
+}
+
 func constraintViolation(fitness types.Fitness) float64 {
 	var s float64
 	for _, cValue := range fitness.ConstraintValues {
