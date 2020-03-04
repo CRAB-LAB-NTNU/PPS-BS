@@ -58,7 +58,7 @@ func generateEmpty2DSliceFloat64(outerLength, innerLength int) [][]float64 {
 	return slice
 }
 
-func (pps *PPS) Run() float64 {
+func (pps *PPS) Run(doBinary bool) float64 {
 	for generation := 0; pps.Moea.FunctionEvaluations() < pps.Moea.MaxGeneration(); generation++ {
 
 		// First we set the ideal and nadir points for this generation based on the current population
@@ -71,22 +71,29 @@ func (pps *PPS) Run() float64 {
 		}
 		// If the change in ideal or nadir points is lower than a user defined value then we change phases
 		if generation <= pps.TC {
-			if pps.rk <= pps.Epsilon && pps.stage != types.Pull {
+			if pps.rk <= pps.Epsilon && pps.stage < types.BorderSearch {
+				if doBinary {
+					pps.stage = types.BorderSearch
+				} else {
+					pps.stage = types.Pull
+					pps.improvedEpsilon[generation], pps.improvedEpsilon[0] = pps.Moea.MaxViolation(), pps.Moea.MaxViolation()
+				}
+				fmt.Println("GEN:", generation, "STAGE:", pps.Stage())
+			} else if pps.stage < types.Pull && pps.Moea.BinaryDone() {
 				pps.stage = types.Pull
-				pps.SwitchPoint = generation
 				pps.improvedEpsilon[generation], pps.improvedEpsilon[0] = pps.Moea.MaxViolation(), pps.Moea.MaxViolation()
+				fmt.Println("GEN:", generation, "STAGE:", pps.Stage())
 			} else if pps.stage == types.Pull {
-				pps.updateIEpsilon(generation)
+				pps.updateEpsilon(generation)
 			}
 		} else {
 			pps.improvedEpsilon[generation] = 0
 		}
+
+		//fmt.Println(generation, pps.Stage(), pps.Moea.MaxViolation())
 		// We evolve the population one generation
 		// How this is done will depend on the underlying moea and constraint-handling method
-
-		doBinary := false && 0.1 > pps.Moea.FeasibleRatio() && pps.stage == types.Pull && !pps.Moea.IsBinarySearch()
-		//fmt.Println(pps.Moea.FeasibleRatio(), pps.improvedEpsilon[generation])
-		pps.Moea.Evolve(pps.stage, doBinary, pps.improvedEpsilon)
+		pps.Moea.Evolve(pps.stage, pps.improvedEpsilon)
 
 		if pps.Config.ExportVideo {
 			pps.plot(generation)
@@ -105,9 +112,9 @@ func (pps *PPS) Run() float64 {
 	return pps.Performance()
 }
 
-func (pps PPS) RunTest() {
+func (pps PPS) RunTest(doBinary bool) {
 	for i := 0; i < pps.Config.Runs; i++ {
-		pps.Result.Add(pps.Run())
+		pps.Result.Add(pps.Run(doBinary))
 		pps.Reset()
 	}
 	fmt.Println("PROBLEM:", pps.Cmop.Name())
@@ -151,17 +158,16 @@ func (pps PPS) rx(k int, points [][]float64) float64 {
 	return m
 }
 
+func (pps PPS) Stage() string {
+	return []string{"Push", "Border Search", "Pull"}[pps.stage]
+}
+
 func (pps PPS) plot(generation int) {
 
 	gen := strconv.Itoa(generation)
 	eps := strconv.FormatFloat(pps.improvedEpsilon[generation], 'E', -1, 64)
 	prob := pps.Cmop.Name()
-	var stage string
-	if pps.stage == types.Push {
-		stage = "PUSH"
-	} else {
-		stage = "PULL"
-	}
+	stage := pps.Stage()
 
 	path := "graphics/gif/" + prob
 

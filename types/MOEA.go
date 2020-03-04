@@ -64,9 +64,10 @@ type MOEA interface {
 	Reset()
 	Ideal() []float64
 	Archive() []Individual
-	Evolve(Stage, bool, []float64)
+	Evolve(Stage, []float64)
 	ResetBinary()
 	IsBinarySearch() bool
+	BinaryDone() bool
 }
 
 // Individual is an interface describing an individual in a population

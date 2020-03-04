@@ -2,6 +2,7 @@ package optimisers
 
 import (
 	"math"
+	"math/rand"
 	"sort"
 
 	"github.com/CRAB-LAB-NTNU/PPS-BS/arrays"
@@ -55,11 +56,11 @@ func ndSelect(archive, population []types.Individual, n int) []types.Individual 
 	return result
 }
 
-func selectBinaryResult(archive, population []types.Individual, n int) []types.Individual {
+func selectBinaryResult(archive, population []types.Individual, n int, p float64) []types.Individual {
 	var result []types.Individual
 	var feasibleCount int
 	for _, ind := range archive {
-		if feasible(ind.Fitness()) {
+		if feasible(ind.Fitness()) && rand.Float64() < p {
 			result = append(result, ind)
 			feasibleCount++
 		}

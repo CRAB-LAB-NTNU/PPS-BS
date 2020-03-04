@@ -1,7 +1,6 @@
 package optimisers
 
 import (
-	"fmt"
 	"math/rand"
 
 	"github.com/CRAB-LAB-NTNU/PPS-BS/arrays"
@@ -120,13 +119,16 @@ func (m *Moead) binarySearch() {
 		}
 	}
 
-	fmt.Println("miss:", missCounter, "hist:", m.historyCounter)
-
 	if missCounter <= m.historyCounter && missCounter > 0 {
-		m.population = selectBinaryResult(m.ArchiveCopy, m.population, m.populationSize)
-		m.ResetBinary()
-		m.historyCounter = -1
+		m.population = selectBinaryResult(m.ArchiveCopy, m.population, m.populationSize, m.BinaryFeasibleSelectionProbability)
+		m.binaryCompleted = true
 		m.maxViolation = -1
+		for _, p := range m.population {
+			cv := constraintViolation(p.Fitness())
+			if cv > m.maxViolation {
+				m.maxViolation = cv
+			}
+		}
 	}
 	m.historyCounter = missCounter
 }

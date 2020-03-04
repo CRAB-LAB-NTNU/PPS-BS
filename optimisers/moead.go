@@ -1,6 +1,7 @@
 package optimisers
 
 import (
+	"fmt"
 	"math/rand"
 
 	"github.com/CRAB-LAB-NTNU/PPS-BS/biooperators"
@@ -22,7 +23,7 @@ type Moead struct {
 	WeightNeigbourhood                                                   [][]int
 	idealPoint                                                           []float64
 	BinaryPairs                                                          []int
-	BinaryMinDistance                                                    float64
+	BinaryMinDistance, BinaryFeasibleSelectionProbability                float64
 	binaryCompleted                                                      bool
 }
 
@@ -54,6 +55,7 @@ func (m *Moead) Reset() {
 	m.Weights = []arrays.Vector{}
 	m.WeightNeigbourhood = [][]int{}
 	m.idealPoint = []float64{}
+	m.binaryCompleted = false
 }
 
 /*Initialise initialises the MOEA/D by calculating the weights, weight neighbourhood,
@@ -102,17 +104,20 @@ func (m Moead) FeasibleRatio() float64 {
 
 /*Evolve performs the genetic operator on all individuals in the population
  */
-func (m *Moead) Evolve(stage types.Stage, doBinary bool, eps []float64) {
-
-	if len(m.BinaryPairs) == 0 && doBinary && len(m.archive) > 0 {
-		m.BinaryPairs = m.selectRandomPairs()
-		m.ArchiveCopy = m.archiveCopy()
-	}
-
-	if len(m.BinaryPairs) > 0 {
-		m.binarySearch()
-		m.generation++
-		return
+func (m *Moead) Evolve(stage types.Stage, eps []float64) {
+	if stage == types.BorderSearch {
+		if len(m.archive) == 0 {
+			fmt.Println("Skipping binary")
+			m.binaryCompleted = true
+		} else {
+			if len(m.BinaryPairs) == 0 {
+				m.BinaryPairs = m.selectRandomPairs()
+				m.ArchiveCopy = m.archiveCopy()
+			}
+			m.binarySearch()
+			m.generation++
+			return
+		}
 	}
 
 	for i := 0; i < m.populationSize; i++ {
@@ -163,4 +168,8 @@ func (m *Moead) ResetBinary() {
 
 func (m Moead) IsBinarySearch() bool {
 	return len(m.BinaryPairs) != 0
+}
+
+func (m Moead) BinaryDone() bool {
+	return m.binaryCompleted
 }

@@ -36,6 +36,10 @@ func (v *Vector) Length() float64 {
 	return math.Sqrt(s)
 }
 
+func (v Vector) Sum() float64 {
+	return Sum(v.inner)
+}
+
 func (v *Vector) Dist(u Vector) float64 {
 	return EuclideanDistance(v.inner, u.inner)
 }

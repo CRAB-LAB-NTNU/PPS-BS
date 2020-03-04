@@ -7,7 +7,7 @@ const (
 	// Push PPS is in the push stage and constraints are ignored
 	Push Stage = iota
 	// BorderSearch PPS is in the stage between Push and Pull
-	BorderSearch Stage = iota
+	BorderSearch
 	// Pull PPS is in the pull stage and constraints are handled
-	Pull Stage = iota
+	Pull
 )
