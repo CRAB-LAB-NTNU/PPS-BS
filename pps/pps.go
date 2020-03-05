@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"time"
 
 	"github.com/CRAB-LAB-NTNU/PPS-BS/biooperators"
 	"github.com/CRAB-LAB-NTNU/PPS-BS/configs"
@@ -22,12 +23,12 @@ type PPS struct {
 	idealPoints, nadirPoints, paretoPoints                         [][]float64
 	rk, Delta, Epsilon                                             float64
 	SearchingPreference, ConstraintRelaxation, RelaxationReduction float64
-	TC, L                                                          int
+	TC, L, SwitchPoint                                             int
 	improvedEpsilon, MetricData                                    []float64
 	Config                                                         configs.PPS
 	Result                                                         types.Results
-	SwitchPoint                                                    int
-	epsSet                                                         bool
+	DoBoundary                                                     bool
+	ConstraintUpdateMethod                                         types.ConstraintMethod
 }
 
 func (pps *PPS) Reset() {
@@ -58,7 +59,7 @@ func generateEmpty2DSliceFloat64(outerLength, innerLength int) [][]float64 {
 	return slice
 }
 
-func (pps *PPS) Run(doBinary bool) float64 {
+func (pps *PPS) Run() float64 {
 	for generation := 0; pps.Moea.FunctionEvaluations() < pps.Moea.MaxGeneration(); generation++ {
 
 		// First we set the ideal and nadir points for this generation based on the current population
@@ -72,25 +73,29 @@ func (pps *PPS) Run(doBinary bool) float64 {
 		// If the change in ideal or nadir points is lower than a user defined value then we change phases
 		if generation <= pps.TC {
 			if pps.rk <= pps.Epsilon && pps.stage < types.BorderSearch {
-				if doBinary {
+				if pps.DoBoundary {
 					pps.stage = types.BorderSearch
 				} else {
 					pps.stage = types.Pull
 					pps.improvedEpsilon[generation], pps.improvedEpsilon[0] = pps.Moea.MaxViolation(), pps.Moea.MaxViolation()
 				}
-				fmt.Println("GEN:", generation, "STAGE:", pps.Stage())
 			} else if pps.stage < types.Pull && pps.Moea.BinaryDone() {
 				pps.stage = types.Pull
 				pps.improvedEpsilon[generation], pps.improvedEpsilon[0] = pps.Moea.MaxViolation(), pps.Moea.MaxViolation()
-				fmt.Println("GEN:", generation, "STAGE:", pps.Stage())
 			} else if pps.stage == types.Pull {
-				pps.updateEpsilon(generation)
+
+				switch pps.ConstraintUpdateMethod {
+				case types.ImprovedEpsilon:
+					pps.UpdateImprovedEpsilon(generation)
+				case types.Epsilon:
+					pps.UpdateEpsilon(generation)
+				}
+
 			}
 		} else {
 			pps.improvedEpsilon[generation] = 0
 		}
-
-		//fmt.Println(generation, pps.Stage(), pps.Moea.MaxViolation())
+		pps.printData(generation)
 		// We evolve the population one generation
 		// How this is done will depend on the underlying moea and constraint-handling method
 		pps.Moea.Evolve(pps.stage, pps.improvedEpsilon)
@@ -112,19 +117,22 @@ func (pps *PPS) Run(doBinary bool) float64 {
 	return pps.Performance()
 }
 
-func (pps PPS) RunTest(doBinary bool) {
+func (pps PPS) RunTest() {
 	for i := 0; i < pps.Config.Runs; i++ {
-		pps.Result.Add(pps.Run(doBinary))
+		fmt.Println(pps.Cmop.Name(), "RUN:", i+1)
+		pps.Result.Add(pps.Run())
 		pps.Reset()
 	}
 	fmt.Println("PROBLEM:", pps.Cmop.Name())
+	fmt.Println("Boundary Search:", pps.DoBoundary)
+	fmt.Println("Constraint method:", pps.ConstraintUpdateMethod)
 	fmt.Println("MEAN:", pps.Result.Mean())
 	fmt.Println("VAR:", pps.Result.Variance())
 	fmt.Println("STD:", pps.Result.StandardDeviation())
 	fmt.Println()
 }
 
-func (pps *PPS) updateIEpsilon(k int) {
+func (pps *PPS) UpdateImprovedEpsilon(k int) {
 	if pps.Moea.FeasibleRatio() < pps.SearchingPreference {
 		pps.improvedEpsilon[k] = (1 - pps.ConstraintRelaxation) * pps.improvedEpsilon[k-1]
 	} else {
@@ -133,7 +141,7 @@ func (pps *PPS) updateIEpsilon(k int) {
 
 }
 
-func (pps *PPS) updateEpsilon(k int) {
+func (pps *PPS) UpdateEpsilon(k int) {
 	pps.improvedEpsilon[k] = (1 - pps.ConstraintRelaxation) * pps.improvedEpsilon[k-1]
 }
 
@@ -226,4 +234,12 @@ func (pps PPS) ExportVideo() {
 
 func (pps PPS) Performance() float64 {
 	return pps.Config.Metric(pps.Moea.Archive(), pps.paretoPoints)
+}
+
+func (pps *PPS) printData(gen int) {
+	t := time.Now()
+	formatted := fmt.Sprintf("%d-%02d-%02dT%02d:%02d:%02d",
+		t.Year(), t.Month(), t.Day(),
+		t.Hour(), t.Minute(), t.Second())
+	fmt.Println(formatted, ",", gen, ",", pps.Stage(), ",", pps.Moea.MaxViolation(), ",", pps.Moea.FeasibleRatio(), ",", pps.improvedEpsilon[gen], ",", pps.Performance())
 }

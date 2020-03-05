@@ -1,6 +1,7 @@
 package types
 
 import (
+	"math"
 	"reflect"
 	"runtime"
 	"strings"
@@ -91,6 +92,14 @@ type Fitness struct {
 	ObjectiveCount, ConstraintCount   int
 	ObjectiveValues, ConstraintValues []float64
 	ConstraintTypes                   []ConstraintType
+}
+
+func (f Fitness) TotalViolation() float64 {
+	var total float64
+	for _, g := range f.ConstraintValues {
+		total += math.Max(0, g)
+	}
+	return total
 }
 
 type Genotype []float64

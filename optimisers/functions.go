@@ -93,9 +93,7 @@ func tchebycheff(objectiveValues, idealPoint []float64, weight arrays.Vector) fl
 		// PPS on the other hand uses 1/w * (f-z)
 		// Using the formula from PPS.
 		v := math.Abs(objectiveValues[i]-idealPoint[i]) / weight.Get(i)
-		if max < v {
-			max = v
-		}
+		max = math.Max(v, max)
 	}
 	return max
 }

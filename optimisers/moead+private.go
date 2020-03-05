@@ -87,11 +87,11 @@ func (m Moead) selectHood(pr float64, i int) []int {
 	return hood
 }
 
-func (m *Moead) binarySearch() {
+func (m *Moead) boundarySearch() {
 	missCounter := 0
 	for i, p := range m.population {
 		m.fnEval++
-		j := m.BinaryPairs[i]
+		j := m.BoundaryPairs[i]
 		if j == -1 {
 			missCounter++
 			continue
@@ -100,8 +100,8 @@ func (m *Moead) binarySearch() {
 
 		dist := arrays.EuclideanDistance(pair.Fitness().ObjectiveValues, p.Fitness().ObjectiveValues)
 
-		if dist <= m.BinaryMinDistance {
-			m.BinaryPairs[j] = -1
+		if dist <= m.BoundaryMinDistance {
+			m.BoundaryPairs[j] = -1
 			missCounter++
 			continue
 		}
@@ -120,7 +120,7 @@ func (m *Moead) binarySearch() {
 	}
 
 	if missCounter <= m.historyCounter && missCounter > 0 {
-		m.population = selectBinaryResult(m.ArchiveCopy, m.population, m.populationSize, m.BinaryFeasibleSelectionProbability)
+		m.population = selectBinaryResult(m.ArchiveCopy, m.population, m.populationSize, m.BoundaryFeasibleSelectionProbability)
 		m.binaryCompleted = true
 		m.maxViolation = -1
 		for _, p := range m.population {

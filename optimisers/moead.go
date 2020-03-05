@@ -22,8 +22,8 @@ type Moead struct {
 	Weights                                                              []arrays.Vector
 	WeightNeigbourhood                                                   [][]int
 	idealPoint                                                           []float64
-	BinaryPairs                                                          []int
-	BinaryMinDistance, BinaryFeasibleSelectionProbability                float64
+	BoundaryPairs                                                        []int
+	BoundaryMinDistance, BoundaryFeasibleSelectionProbability            float64
 	binaryCompleted                                                      bool
 }
 
@@ -110,11 +110,11 @@ func (m *Moead) Evolve(stage types.Stage, eps []float64) {
 			fmt.Println("Skipping binary")
 			m.binaryCompleted = true
 		} else {
-			if len(m.BinaryPairs) == 0 {
-				m.BinaryPairs = m.selectRandomPairs()
+			if len(m.BoundaryPairs) == 0 {
+				m.BoundaryPairs = m.selectRandomPairs()
 				m.ArchiveCopy = m.archiveCopy()
 			}
-			m.binarySearch()
+			m.boundarySearch()
 			m.generation++
 			return
 		}
@@ -163,11 +163,11 @@ func (m *Moead) Evolve(stage types.Stage, eps []float64) {
 
 func (m *Moead) ResetBinary() {
 	m.ArchiveCopy = []types.Individual{}
-	m.BinaryPairs = []int{}
+	m.BoundaryPairs = []int{}
 }
 
 func (m Moead) IsBinarySearch() bool {
-	return len(m.BinaryPairs) != 0
+	return len(m.BoundaryPairs) != 0
 }
 
 func (m Moead) BinaryDone() bool {

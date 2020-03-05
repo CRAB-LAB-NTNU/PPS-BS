@@ -11,3 +11,13 @@ const (
 	// Pull PPS is in the pull stage and constraints are handled
 	Pull
 )
+
+// ConstraintMethod is an enum controlling which constraint handling method to use.
+type ConstraintMethod int
+
+const (
+	// ImprovedEpsilon sets the Improved Epsilon constraint handling method
+	ImprovedEpsilon ConstraintMethod = iota
+	// Epsilon sets the Epsilon constraint handling method
+	Epsilon
+)
