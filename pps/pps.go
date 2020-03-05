@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"time"
 
 	"github.com/CRAB-LAB-NTNU/PPS-BS/biooperators"
 	"github.com/CRAB-LAB-NTNU/PPS-BS/configs"
@@ -22,10 +23,12 @@ type PPS struct {
 	idealPoints, nadirPoints, paretoPoints                         [][]float64
 	rk, Delta, Epsilon                                             float64
 	SearchingPreference, ConstraintRelaxation, RelaxationReduction float64
-	TC, L                                                          int
-	improvedEpsilon                                                []float64
+	TC, L, SwitchPoint                                             int
+	improvedEpsilon, MetricData                                    []float64
 	Config                                                         configs.PPS
 	Result                                                         types.Results
+	DoBoundary                                                     bool
+	ConstraintUpdateMethod                                         types.ConstraintMethod
 }
 
 func (pps *PPS) Reset() {
@@ -69,25 +72,46 @@ func (pps *PPS) Run() float64 {
 		}
 		// If the change in ideal or nadir points is lower than a user defined value then we change phases
 		if generation <= pps.TC {
-			if pps.rk <= pps.Epsilon && pps.stage != types.Pull {
+			if pps.rk <= pps.Epsilon && pps.stage < types.BorderSearch {
+				if pps.DoBoundary {
+					pps.stage = types.BorderSearch
+				} else {
+					pps.stage = types.Pull
+					pps.improvedEpsilon[generation], pps.improvedEpsilon[0] = pps.Moea.MaxViolation(), pps.Moea.MaxViolation()
+				}
+			} else if pps.stage < types.Pull && pps.Moea.BinaryDone() {
 				pps.stage = types.Pull
 				pps.improvedEpsilon[generation], pps.improvedEpsilon[0] = pps.Moea.MaxViolation(), pps.Moea.MaxViolation()
 			} else if pps.stage == types.Pull {
-				pps.updateEpsilon(generation)
+
+				switch pps.ConstraintUpdateMethod {
+				case types.ImprovedEpsilon:
+					pps.UpdateImprovedEpsilon(generation)
+				case types.Epsilon:
+					pps.UpdateEpsilon(generation)
+				}
+
 			}
 		} else {
 			pps.improvedEpsilon[generation] = 0
 		}
-
+		pps.printData(generation)
 		// We evolve the population one generation
 		// How this is done will depend on the underlying moea and constraint-handling method
 		pps.Moea.Evolve(pps.stage, pps.improvedEpsilon)
+
 		if pps.Config.ExportVideo {
 			pps.plot(generation)
+		}
+		if pps.Config.PlotEval {
+			pps.MetricData = append(pps.MetricData, pps.Performance())
 		}
 	}
 	if pps.Config.ExportVideo {
 		pps.ExportVideo()
+	}
+	if pps.Config.PlotEval {
+		pps.plotMetric()
 	}
 
 	return pps.Performance()
@@ -95,22 +119,30 @@ func (pps *PPS) Run() float64 {
 
 func (pps PPS) RunTest() {
 	for i := 0; i < pps.Config.Runs; i++ {
+		fmt.Println(pps.Cmop.Name(), "RUN:", i+1)
 		pps.Result.Add(pps.Run())
 		pps.Reset()
 	}
-	fmt.Println("Values", pps.Result.Values())
+	fmt.Println("PROBLEM:", pps.Cmop.Name())
+	fmt.Println("Boundary Search:", pps.DoBoundary)
+	fmt.Println("Constraint method:", pps.ConstraintUpdateMethod)
 	fmt.Println("MEAN:", pps.Result.Mean())
-	fmt.Println("Variance:", pps.Result.Variance())
-	fmt.Println("Mean:", pps.Result.StandardDeviation())
+	fmt.Println("VAR:", pps.Result.Variance())
+	fmt.Println("STD:", pps.Result.StandardDeviation())
+	fmt.Println()
 }
 
-func (pps *PPS) updateEpsilon(k int) {
+func (pps *PPS) UpdateImprovedEpsilon(k int) {
 	if pps.Moea.FeasibleRatio() < pps.SearchingPreference {
 		pps.improvedEpsilon[k] = (1 - pps.ConstraintRelaxation) * pps.improvedEpsilon[k-1]
 	} else {
-		pps.improvedEpsilon[k] = pps.improvedEpsilon[0] * math.Pow((1-(float64(k)/float64(pps.Moea.MaxGeneration()))), pps.RelaxationReduction)
+		pps.improvedEpsilon[k] = pps.improvedEpsilon[0] * math.Pow((1-(float64(k)/float64(pps.TC))), pps.RelaxationReduction)
 	}
 
+}
+
+func (pps *PPS) UpdateEpsilon(k int) {
+	pps.improvedEpsilon[k] = (1 - pps.ConstraintRelaxation) * pps.improvedEpsilon[k-1]
 }
 
 // CalculateMaxChange Calculates the max change in ideal or nadir points
@@ -134,17 +166,16 @@ func (pps PPS) rx(k int, points [][]float64) float64 {
 	return m
 }
 
+func (pps PPS) Stage() string {
+	return []string{"Push", "Border Search", "Pull"}[pps.stage]
+}
+
 func (pps PPS) plot(generation int) {
 
 	gen := strconv.Itoa(generation)
 	eps := strconv.FormatFloat(pps.improvedEpsilon[generation], 'E', -1, 64)
 	prob := pps.Cmop.Name()
-	var stage string
-	if pps.stage == types.Push {
-		stage = "PUSH"
-	} else {
-		stage = "PULL"
-	}
+	stage := pps.Stage()
 
 	path := "graphics/gif/" + prob
 
@@ -163,6 +194,21 @@ func (pps PPS) plot(generation int) {
 		Extremes: [][]float64{pps.idealPoints[generation], pps.nadirPoints[generation], pps.Moea.Ideal()},
 	}
 	plotter.Plot(pps.Moea.Population(), pps.Moea.Archive())
+}
+
+func (pps PPS) plotMetric() {
+	prob := pps.Cmop.Name()
+	path := "graphics/metric/" + prob
+	if err := os.MkdirAll(path, 0755); err != nil {
+		log.Fatal(err)
+	}
+	plotter := plotter.Plotter2D{
+		Title:    prob + " Metric",
+		LabelX:   "Generation",
+		LabelY:   "IGD",
+		Filename: path + "/" + prob + ".png",
+	}
+	plotter.PlotMetric(pps.MetricData, pps.SwitchPoint)
 }
 
 func (pps PPS) ExportVideo() {
@@ -188,4 +234,12 @@ func (pps PPS) ExportVideo() {
 
 func (pps PPS) Performance() float64 {
 	return pps.Config.Metric(pps.Moea.Archive(), pps.paretoPoints)
+}
+
+func (pps *PPS) printData(gen int) {
+	t := time.Now()
+	formatted := fmt.Sprintf("%d-%02d-%02dT%02d:%02d:%02d",
+		t.Year(), t.Month(), t.Day(),
+		t.Hour(), t.Minute(), t.Second())
+	fmt.Println(formatted, ",", gen, ",", pps.Stage(), ",", pps.Moea.MaxViolation(), ",", pps.Moea.FeasibleRatio(), ",", pps.improvedEpsilon[gen], ",", pps.Performance())
 }

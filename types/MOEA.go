@@ -1,6 +1,7 @@
 package types
 
 import (
+	"math"
 	"reflect"
 	"runtime"
 	"strings"
@@ -65,7 +66,9 @@ type MOEA interface {
 	Ideal() []float64
 	Archive() []Individual
 	Evolve(Stage, []float64)
-	Crossover([]Individual) []Individual
+	ResetBinary()
+	IsBinarySearch() bool
+	BinaryDone() bool
 }
 
 // Individual is an interface describing an individual in a population
@@ -73,6 +76,7 @@ type Individual interface {
 	Genotype() Genotype //TODO: se på måter å gjøre dette mer generelt senere
 	Fitness() Fitness
 	UpdateFitness(CMOP) Fitness
+	Copy() Individual
 	//Mutate()
 	//ConstraintViolation()
 	//UpdateConstraintViolation()
@@ -88,6 +92,14 @@ type Fitness struct {
 	ObjectiveCount, ConstraintCount   int
 	ObjectiveValues, ConstraintValues []float64
 	ConstraintTypes                   []ConstraintType
+}
+
+func (f Fitness) TotalViolation() float64 {
+	var total float64
+	for _, g := range f.ConstraintValues {
+		total += math.Max(0, g)
+	}
+	return total
 }
 
 type Genotype []float64

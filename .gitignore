@@ -20,3 +20,5 @@ goWrite.txt
 test.txt
 graphics*
 **/.DS_Store
+results/
+results.copy/

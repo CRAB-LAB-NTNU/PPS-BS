@@ -24,6 +24,15 @@ func (i *MoeadIndividual) SetFitness(f types.Fitness) {
 	i.fitness = f
 }
 
+func (i MoeadIndividual) Copy() types.Individual {
+	ind := MoeadIndividual{
+		D:        i.D,
+		fitness:  i.Fitness(),
+		genotype: i.Genotype(),
+	}
+	return &ind
+}
+
 /*Genotype returns the genotype of the individual
  */
 func (i MoeadIndividual) Genotype() types.Genotype {
