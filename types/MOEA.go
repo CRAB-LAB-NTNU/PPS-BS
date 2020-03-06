@@ -2,23 +2,23 @@ package types
 
 import (
 	"math"
-	"reflect"
-	"runtime"
-	"strings"
 )
 
 // CMOP is a interface describing a multi objective optimisation problem
-type CMOP struct {
-	NumberOfObjectives int
-	Calculate          func(Genotype) Fitness
+type CMOP interface {
+	NumberOfObjectives() int
+	NumberOfConstraints() int
+	Name() string
+	Calculate(Genotype) Fitness
 }
 
+/*
 func (c CMOP) Name() string {
 	abs := runtime.FuncForPC(reflect.ValueOf(c.Calculate).Pointer()).Name()
 	split := strings.Split(abs, ".")
 	return split[len(split)-1]
 }
-
+*/
 /*
 // Objective describes an objective of a problem
 type Objective struct {
@@ -66,6 +66,7 @@ type MOEA interface {
 	Ideal() []float64
 	Archive() []Individual
 	Evolve(Stage, []float64)
+	EvolveR2s()
 	ResetBinary()
 	IsBinarySearch() bool
 	BinaryDone() bool
@@ -99,6 +100,20 @@ func (f Fitness) TotalViolation() float64 {
 	for _, g := range f.ConstraintValues {
 		total += math.Max(0, g)
 	}
+	return total
+}
+
+func (f Fitness) TotalViolationAbsolute() float64 {
+	var total float64
+	for _, g := range f.ConstraintValues {
+		total += math.Abs(g)
+	}
+	return total
+}
+
+func (f Fitness) TotalViolationR2S() float64 {
+	var total float64
+
 	return total
 }
 

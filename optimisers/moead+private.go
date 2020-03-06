@@ -87,6 +87,16 @@ func (m Moead) selectHood(pr float64, i int) []int {
 	return hood
 }
 
+func (m *Moead) selectIndividualsForCrossover(hood []int) (types.Individual, types.Individual) {
+	x := rand.Intn(len(hood))
+	y := x
+	for y == x {
+		y = rand.Intn(len(hood))
+	}
+	return m.population[hood[x]], m.population[hood[y]]
+
+}
+
 func (m *Moead) boundarySearch() {
 	missCounter := 0
 	for i, p := range m.population {

@@ -7,6 +7,92 @@ import (
 	"github.com/CRAB-LAB-NTNU/PPS-BS/types"
 )
 
+type LIRCMOP struct {
+	numberOfObjectives, numberOfConstraints int
+	name                                    string
+	CalcFunc                                func(types.Genotype) types.Fitness
+}
+
+func (lircmop *LIRCMOP) Initialize(problem int) {
+	lircmop.name = fmt.Sprintf("%s%d", "LIRCMOP", problem)
+	switch problem {
+	case 1:
+		lircmop.numberOfObjectives = 2
+		lircmop.numberOfConstraints = 2
+		lircmop.CalcFunc = CMOP1
+	case 2:
+		lircmop.numberOfObjectives = 2
+		lircmop.numberOfConstraints = 2
+		lircmop.CalcFunc = CMOP2
+	case 3:
+		lircmop.numberOfObjectives = 2
+		lircmop.numberOfConstraints = 3
+		lircmop.CalcFunc = CMOP3
+	case 4:
+		lircmop.numberOfObjectives = 2
+		lircmop.numberOfConstraints = 3
+		lircmop.CalcFunc = CMOP4
+
+	case 5:
+		lircmop.numberOfObjectives = 2
+		lircmop.numberOfConstraints = 2
+		lircmop.CalcFunc = CMOP5
+	case 6:
+		lircmop.numberOfObjectives = 2
+		lircmop.numberOfConstraints = 2
+		lircmop.CalcFunc = CMOP6
+	case 7:
+		lircmop.numberOfObjectives = 2
+		lircmop.numberOfConstraints = 3
+		lircmop.CalcFunc = CMOP7
+	case 8:
+		lircmop.numberOfObjectives = 2
+		lircmop.numberOfConstraints = 3
+		lircmop.CalcFunc = CMOP8
+	case 9:
+		lircmop.numberOfObjectives = 2
+		lircmop.numberOfConstraints = 2
+		lircmop.CalcFunc = CMOP9
+	case 10:
+		lircmop.numberOfObjectives = 2
+		lircmop.numberOfConstraints = 2
+		lircmop.CalcFunc = CMOP10
+	case 11:
+		lircmop.numberOfObjectives = 2
+		lircmop.numberOfConstraints = 2
+		lircmop.CalcFunc = CMOP11
+	case 12:
+		lircmop.numberOfObjectives = 2
+		lircmop.numberOfConstraints = 2
+		lircmop.CalcFunc = CMOP12
+	case 13:
+		lircmop.numberOfObjectives = 3
+		lircmop.numberOfConstraints = 2
+		lircmop.CalcFunc = CMOP13
+	case 14:
+		lircmop.numberOfObjectives = 3
+		lircmop.numberOfConstraints = 3
+		lircmop.CalcFunc = CMOP14
+
+	}
+}
+
+func (lircmop LIRCMOP) Calculate(x types.Genotype) types.Fitness {
+	return lircmop.CalcFunc(x)
+}
+
+func (lircmop LIRCMOP) Name() string {
+	return lircmop.name
+}
+
+func (lircmop LIRCMOP) NumberOfConstraints() int {
+	return lircmop.numberOfConstraints
+}
+
+func (lircmop LIRCMOP) NumberOfObjectives() int {
+	return lircmop.numberOfObjectives
+}
+
 func CMOP1(x types.Genotype) types.Fitness {
 	return types.Fitness{
 		ObjectiveCount:  2,

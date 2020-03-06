@@ -31,6 +31,8 @@ type PPS struct {
 	ConstraintUpdateMethod                                         types.ConstraintMethod
 }
 
+//TODO: this struct is becoming very large and not really that modular. should maybe look at ways to split things up more and make them general
+
 func (pps *PPS) Reset() {
 	pps.Moea.Reset()
 	pps.Initialise()
@@ -40,8 +42,8 @@ func (pps *PPS) Reset() {
 func (pps *PPS) Initialise() {
 	pps.improvedEpsilon = make([]float64, pps.Moea.MaxGeneration())
 	pps.Moea.Initialise()
-	pps.idealPoints = generateEmpty2DSliceFloat64(pps.Moea.MaxGeneration(), pps.Cmop.NumberOfObjectives)
-	pps.nadirPoints = generateEmpty2DSliceFloat64(pps.Moea.MaxGeneration(), pps.Cmop.NumberOfObjectives)
+	pps.idealPoints = generateEmpty2DSliceFloat64(pps.Moea.MaxGeneration(), pps.Cmop.NumberOfObjectives())
+	pps.nadirPoints = generateEmpty2DSliceFloat64(pps.Moea.MaxGeneration(), pps.Cmop.NumberOfObjectives())
 	pps.rk = 1.0
 	pps.stage = types.Push
 	if points, err := plotter.ParseDatFile("arraydata/pf_data/" + pps.Cmop.Name() + ".dat"); err == nil {
@@ -70,7 +72,7 @@ func (pps *PPS) Run() float64 {
 		if generation >= pps.L {
 			pps.CalculateMaxChange(generation)
 		}
-		// If the change in ideal or nadir points is lower than a user defined value then we change phases
+
 		if generation <= pps.TC {
 			if pps.rk <= pps.Epsilon && pps.stage < types.BorderSearch {
 				if pps.DoBoundary {
@@ -117,6 +119,45 @@ func (pps *PPS) Run() float64 {
 	return pps.Performance()
 }
 
+//RunP2S runs the PPS framework using R2S as a constraint handling method
+func (pps *PPS) RunR2S() float64 {
+
+	//The population is initialised and evaluated during the initialisation of pps
+
+	//TODO: construct boundary regions for every constraint baesd on the determined deltaIn and deltaOut
+	// WTF does that even mean? Aren't the boundaries there based on the values of DeltaIn and out anyway?
+	// You just have to use them when determining if an individual is feasible or not....
+
+	for generation := 0; pps.Moea.FunctionEvaluations() < pps.Moea.MaxGeneration(); generation++ {
+		ip, np := biooperators.CalculateNadirAndIdealPoints(pps.Moea.Population())
+		pps.idealPoints[generation] = ip
+		pps.nadirPoints[generation] = np
+
+		if generation >= pps.L {
+			pps.CalculateMaxChange(generation)
+
+		}
+
+		//pps.printData(generation)
+		pps.Moea.EvolveR2s()
+
+		if pps.Config.ExportVideo {
+			pps.plot(generation)
+		}
+		if pps.Config.PlotEval {
+			pps.MetricData = append(pps.MetricData, pps.Performance())
+
+		}
+	}
+	if pps.Config.ExportVideo {
+		pps.ExportVideo()
+	}
+	if pps.Config.PlotEval {
+		pps.plotMetric()
+	}
+	return pps.Performance()
+}
+
 func (pps PPS) RunTest() {
 	for i := 0; i < pps.Config.Runs; i++ {
 		fmt.Println(pps.Cmop.Name(), "RUN:", i+1)
@@ -155,7 +196,7 @@ func (pps *PPS) CalculateMaxChange(generation int) {
 
 func (pps PPS) rx(k int, points [][]float64) float64 {
 	m := math.SmallestNonzeroFloat64
-	for i := 0; i < pps.Cmop.NumberOfObjectives; i++ {
+	for i := 0; i < pps.Cmop.NumberOfObjectives(); i++ {
 		cur := points[k][i]
 		offset := points[k-pps.L][i]
 		dist := math.Abs(cur - offset)
