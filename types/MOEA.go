@@ -95,25 +95,23 @@ type Fitness struct {
 	ConstraintTypes                   []ConstraintType
 }
 
+/*
+This method is wrong. It will not calculate the correct constraint violation
 func (f Fitness) TotalViolation() float64 {
 	var total float64
 	for _, g := range f.ConstraintValues {
 		total += math.Max(0, g)
 	}
 	return total
-}
+}*/
 
 func (f Fitness) TotalViolationAbsolute() float64 {
 	var total float64
 	for _, g := range f.ConstraintValues {
-		total += math.Abs(g)
+		if g < 0 { // when constraints are negative they are broken
+			total += math.Abs(g)
+		}
 	}
-	return total
-}
-
-func (f Fitness) TotalViolationR2S() float64 {
-	var total float64
-
 	return total
 }
 

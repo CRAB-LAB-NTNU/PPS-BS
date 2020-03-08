@@ -155,6 +155,7 @@ func (pps *PPS) RunR2S() float64 {
 	if pps.Config.PlotEval {
 		pps.plotMetric()
 	}
+	fmt.Println(len(pps.Moea.Archive()))
 	return pps.Performance()
 }
 

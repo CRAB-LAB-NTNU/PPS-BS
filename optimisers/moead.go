@@ -82,7 +82,7 @@ func (m *Moead) Initialise() {
 	m.maxViolation = -1
 	m.historyCounter = -1
 
-	m.R2s.Initialize(m.MaxGeneration(), 3, 1000, m.FeasibleRatio(), m.Population())
+	m.R2s.Initialize(m.MaxGeneration(), 3, m.FeasibleRatio(), m.Population())
 }
 
 func (m Moead) FunctionEvaluations() int {
@@ -164,29 +164,9 @@ func (m *Moead) Evolve(stage types.Stage, eps []float64) {
 
 func (m *Moead) EvolveR2s() {
 
-	offSpring := make([]types.Individual, m.populationSize)
-	hoods := make([][]int, m.populationSize)
-	for i := 0; i < m.populationSize; i++ {
-		hood := m.selectHood(0.9, i)
-		hoods[i] = hood
-		x, y := m.selectIndividualsForCrossover(hood)
-		offSpring[i] = m.crossover([]types.Individual{m.population[i], x, y})[0]
-
-		m.fnEval++
-
-		f := offSpring[i].Fitness()
-		for j, val := range f.ObjectiveValues {
-			if val < m.idealPoint[j] {
-				m.idealPoint[j] = f.ObjectiveValues[j]
-			}
-		}
-
-	}
-
 	rankedPopulation := biooperators.FastNonDominatedSort(m.population)
 	randomIndex := rand.Intn(len(rankedPopulation[0]))
 	randomBest := rankedPopulation[0][randomIndex]
-
 	m.R2s.ACD(m.generation, m.fnEval, randomBest.Fitness())
 
 	for _, activeConstraint := range m.R2s.ActiveConstraints {
@@ -194,53 +174,56 @@ func (m *Moead) EvolveR2s() {
 			m.R2s.UpdateDeltaIn(m.generation, m.fnEval)
 			m.R2s.UpdateDeltaOut(m.generation, m.fnEval)
 			break
-		} else {
-			//TODO remove boundary??
 		}
 	}
 
-	newPop := make([]types.Individual, m.populationSize)
+	for i := 0; i < m.populationSize; i++ {
+		hood := m.selectHood(0.9, i)
+		x, y := m.selectIndividualsForCrossover(hood)
+		offSpring := m.crossover([]types.Individual{m.population[i], x, y})[0]
 
-	for i := range m.population {
-
-		hood := hoods[i]
-
-		oF := offSpring[i].Fitness()
-		pF := m.population[i].Fitness()
-		oCV := m.R2s.ConstraintViolation(m.generation, oF)
-		pCV := m.R2s.ConstraintViolation(m.generation, pF)
+		m.fnEval++
+		oF := offSpring.Fitness()
+		for j, val := range oF.ObjectiveValues {
+			if val < m.idealPoint[j] {
+				m.idealPoint[j] = oF.ObjectiveValues[j]
+			}
+		}
 
 		for len(hood) > 0 {
 			j := rand.Intn(len(hood))
-			oS := tchebycheff(oF.ObjectiveValues, m.idealPoint, m.Weights[j])
-			pS := tchebycheff(pF.ObjectiveValues, m.idealPoint, m.Weights[j])
+			pF := m.population[hood[j]].Fitness()
+			oCV := m.R2s.ConstraintViolation(m.generation, oF)
+			pCV := m.R2s.ConstraintViolation(m.generation, pF)
 
+			oS := tchebycheff(oF.ObjectiveValues, m.idealPoint, m.Weights[hood[j]])
+			pS := tchebycheff(pF.ObjectiveValues, m.idealPoint, m.Weights[hood[j]])
+
+			if m.generation < 300 {
+				if oS <= pS {
+					m.population[hood[j]] = offSpring
+				}
+				break
+			}
 			if oCV <= 0 && pCV <= 0 {
 				if oS <= pS {
-					newPop[i] = offSpring[i]
+					m.population[hood[j]] = offSpring
 					break
-				} else {
-					newPop[i] = m.population[i]
 				}
 			} else if oCV == pCV {
 				if oS <= pS {
-					newPop[i] = offSpring[i]
+					m.population[hood[j]] = offSpring
 					break
-				} else {
-					newPop[i] = m.population[i]
 				}
 			} else if oCV < pCV {
-				newPop[i] = offSpring[i]
+				m.population[hood[j]] = offSpring
 				break
-			} else {
-				newPop[i] = m.population[i]
 			}
-
 			hood = arrays.Remove(hood, j)
 		}
 
 	}
-	m.population = newPop
+
 	m.generation++
 	m.archive = ndSelect(m.archive, m.population, m.populationSize)
 
