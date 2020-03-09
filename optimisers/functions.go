@@ -59,8 +59,9 @@ func ndSelect(archive, population []types.Individual, n int) []types.Individual 
 func selectBinaryResult(archive, population []types.Individual, n int, p float64) []types.Individual {
 	var result []types.Individual
 	var feasibleCount int
+	k := float64(len(population)) / float64(len(archive)) * p
 	for _, ind := range archive {
-		if feasible(ind.Fitness()) && rand.Float64() < p {
+		if feasible(ind.Fitness()) && rand.Float64() < k {
 			result = append(result, ind)
 			feasibleCount++
 		}
