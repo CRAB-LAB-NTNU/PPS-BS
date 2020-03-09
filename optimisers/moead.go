@@ -14,16 +14,16 @@ import (
  */
 type Moead struct {
 	archive, ArchiveCopy, population                                     []types.Individual
-	CMOP                                                                 types.CMOP
+	Cmop                                                                 types.CMOP
 	WeightNeigbourhoodSize, WeightDistribution, populationSize           int
-	DecisionSize, MaxChangeIndividuals, generation, GenerationMax        int
+	MaxChangeIndividuals, generation, EvaluationsMax                     int
 	fnEval, historyCounter                                               int
 	DEDifferentialWeight, CrossoverRate, DistributionIndex, maxViolation float64
-	Weights                                                              []arrays.Vector
+	BoundaryMinDistance, BoundaryFeasibleSelectionProbability            float64
 	WeightNeigbourhood                                                   [][]int
 	idealPoint                                                           []float64
 	BoundaryPairs                                                        []int
-	BoundaryMinDistance, BoundaryFeasibleSelectionProbability            float64
+	Weights                                                              []arrays.Vector
 	binaryCompleted                                                      bool
 }
 
@@ -31,8 +31,8 @@ func (m Moead) Ideal() []float64 {
 	return m.idealPoint
 }
 
-func (m Moead) MaxGeneration() int {
-	return m.GenerationMax
+func (m Moead) MaxEvaluations() int {
+	return m.EvaluationsMax
 }
 
 func (m Moead) Archive() []types.Individual {
@@ -48,21 +48,24 @@ func (m Moead) Population() []types.Individual {
 }
 
 func (m *Moead) Reset() {
-	m.archive = []types.Individual{}
-	m.population = []types.Individual{}
-	m.generation = 0
-	m.fnEval = 0
-	m.Weights = []arrays.Vector{}
-	m.WeightNeigbourhood = [][]int{}
-	m.idealPoint = []float64{}
-	m.binaryCompleted = false
+
 }
 
 /*Initialise initialises the MOEA/D by calculating the weights, weight neighbourhood,
 population and ideal point.
 */
-func (m *Moead) Initialise() {
-	m.Weights = arrays.UniformDistributedVectors(m.CMOP.NumberOfObjectives, m.WeightDistribution)
+func (m *Moead) Initialise(cmop types.CMOP) {
+	m.Cmop = cmop
+	m.archive = make([]types.Individual, 0)
+	m.population = make([]types.Individual, 0)
+	m.WeightNeigbourhood = make([][]int, 0)
+	m.idealPoint = make([]float64, 0)
+	m.generation = 0
+	m.fnEval = 0
+
+	m.binaryCompleted = false
+
+	m.Weights = arrays.UniformDistributedVectors(m.Cmop.ObjectiveCount, m.WeightDistribution)
 
 	m.populationSize = len(m.Weights)
 
@@ -71,8 +74,8 @@ func (m *Moead) Initialise() {
 	}
 
 	for i := 0; i < m.populationSize; i++ {
-		ind := MoeadIndividual{D: m.DecisionSize}
-		ind.InitialiseRandom(m.CMOP)
+		ind := MoeadIndividual{Cmop: m.Cmop}
+		ind.Initialise()
 		m.population = append(m.population, &ind)
 	}
 	m.idealPoint = biooperators.CalculateIdealPoints(m.population)
@@ -86,7 +89,7 @@ func (m Moead) FunctionEvaluations() int {
 func (m Moead) ConstraintViolation() []float64 {
 	a := make([]float64, m.populationSize)
 	for i, ind := range m.population {
-		a[i] = constraintViolation(ind.Fitness())
+		a[i] = ind.Fitness().ConstraintViolation()
 	}
 	return a
 }
@@ -94,7 +97,7 @@ func (m Moead) ConstraintViolation() []float64 {
 func (m Moead) FeasibleRatio() float64 {
 	feas := 0
 	for _, i := range m.population {
-		if feasible(i.Fitness()) {
+		if i.Fitness().Feasible() {
 			feas++
 		}
 	}
@@ -138,8 +141,8 @@ func (m *Moead) Evolve(stage types.Stage, eps []float64) {
 			}
 		}
 		// Update max violation
-		if constraintViolation(f) > m.maxViolation {
-			m.maxViolation = constraintViolation(f)
+		if f.ConstraintViolation() > m.maxViolation {
+			m.maxViolation = f.ConstraintViolation()
 		}
 		c := 0
 		for c < m.MaxChangeIndividuals && len(hood) > 0 {

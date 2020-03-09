@@ -16,12 +16,12 @@ func CMOP1(x types.Genotype) types.Fitness {
 			types.EqualsOrGreaterThanZero,
 		},
 		ObjectiveValues: []float64{
-			objective1(x),
-			objective2(x),
+			Objective1(x),
+			Objective2(x),
 		},
 		ConstraintValues: []float64{
-			constraint1(x, inner1),
-			constraint1(x, inner2),
+			Constraint1(x, Inner1),
+			Constraint1(x, Inner2),
 		},
 	}
 }
@@ -35,12 +35,12 @@ func CMOP2(x types.Genotype) types.Fitness {
 			types.EqualsOrGreaterThanZero,
 		},
 		ObjectiveValues: []float64{
-			objective1(x),
-			objective3(x),
+			Objective1(x),
+			Objective3(x),
 		},
 		ConstraintValues: []float64{
-			constraint1(x, inner1),
-			constraint1(x, inner2),
+			Constraint1(x, Inner1),
+			Constraint1(x, Inner2),
 		},
 	}
 }
@@ -48,14 +48,14 @@ func CMOP2(x types.Genotype) types.Fitness {
 func CMOP3(x types.Genotype) types.Fitness {
 	fitness := CMOP1(x)
 	fitness.ConstraintCount = 3
-	fitness.ConstraintValues = append(fitness.ConstraintValues, constraint2(x))
+	fitness.ConstraintValues = append(fitness.ConstraintValues, Constraint2(x))
 	return fitness
 }
 
 func CMOP4(x types.Genotype) types.Fitness {
 	fitness := CMOP2(x)
 	fitness.ConstraintCount = 3
-	fitness.ConstraintValues = append(fitness.ConstraintValues, constraint2(x))
+	fitness.ConstraintValues = append(fitness.ConstraintValues, Constraint2(x))
 	return fitness
 }
 
@@ -72,13 +72,13 @@ func CMOP5(x types.Genotype) types.Fitness {
 			types.EqualsOrGreaterThanZero,
 		},
 		ObjectiveValues: []float64{
-			objective4(x),
-			objective5(x),
+			Objective4(x),
+			Objective5(x),
 		},
 	}
 	fitness.ConstraintValues = []float64{
-		constraint3(x, p, q, a, b, 0, fitness.ObjectiveValues[0], fitness.ObjectiveValues[1]),
-		constraint3(x, p, q, a, b, 1, fitness.ObjectiveValues[0], fitness.ObjectiveValues[1]),
+		Constraint3(x, p, q, a, b, 0, fitness.ObjectiveValues[0], fitness.ObjectiveValues[1]),
+		Constraint3(x, p, q, a, b, 1, fitness.ObjectiveValues[0], fitness.ObjectiveValues[1]),
 	}
 	return fitness
 }
@@ -96,13 +96,13 @@ func CMOP6(x types.Genotype) types.Fitness {
 			types.EqualsOrGreaterThanZero,
 		},
 		ObjectiveValues: []float64{
-			objective4(x),
-			objective6(x),
+			Objective4(x),
+			Objective6(x),
 		},
 	}
 	fitness.ConstraintValues = []float64{
-		constraint3(x, p, q, a, b, 0, fitness.ObjectiveValues[0], fitness.ObjectiveValues[1]),
-		constraint3(x, p, q, a, b, 1, fitness.ObjectiveValues[0], fitness.ObjectiveValues[1]),
+		Constraint3(x, p, q, a, b, 0, fitness.ObjectiveValues[0], fitness.ObjectiveValues[1]),
+		Constraint3(x, p, q, a, b, 1, fitness.ObjectiveValues[0], fitness.ObjectiveValues[1]),
 	}
 	return fitness
 }
@@ -115,12 +115,12 @@ func CMOP7(x types.Genotype) types.Fitness {
 	fitness := types.Fitness{
 		ObjectiveCount: 2, ConstraintCount: 3,
 		ConstraintTypes: []types.ConstraintType{types.EqualsOrGreaterThanZero, types.EqualsOrGreaterThanZero, types.EqualsOrGreaterThanZero},
-		ObjectiveValues: []float64{objective4(x), objective5(x)},
+		ObjectiveValues: []float64{Objective4(x), Objective5(x)},
 	}
 	fitness.ConstraintValues = []float64{
-		constraint3(x, p, q, a, b, 0, fitness.ObjectiveValues[0], fitness.ObjectiveValues[1]),
-		constraint3(x, p, q, a, b, 1, fitness.ObjectiveValues[0], fitness.ObjectiveValues[1]),
-		constraint3(x, p, q, a, b, 2, fitness.ObjectiveValues[0], fitness.ObjectiveValues[1]),
+		Constraint3(x, p, q, a, b, 0, fitness.ObjectiveValues[0], fitness.ObjectiveValues[1]),
+		Constraint3(x, p, q, a, b, 1, fitness.ObjectiveValues[0], fitness.ObjectiveValues[1]),
+		Constraint3(x, p, q, a, b, 2, fitness.ObjectiveValues[0], fitness.ObjectiveValues[1]),
 	}
 	return fitness
 }
@@ -133,12 +133,12 @@ func CMOP8(x types.Genotype) types.Fitness {
 	fitness := types.Fitness{
 		ObjectiveCount: 2, ConstraintCount: 3,
 		ConstraintTypes: []types.ConstraintType{types.EqualsOrGreaterThanZero, types.EqualsOrGreaterThanZero, types.EqualsOrGreaterThanZero},
-		ObjectiveValues: []float64{objective4(x), objective6(x)},
+		ObjectiveValues: []float64{Objective4(x), Objective6(x)},
 	}
 	fitness.ConstraintValues = []float64{
-		constraint3(x, p, q, a, b, 0, fitness.ObjectiveValues[0], fitness.ObjectiveValues[1]),
-		constraint3(x, p, q, a, b, 1, fitness.ObjectiveValues[0], fitness.ObjectiveValues[1]),
-		constraint3(x, p, q, a, b, 2, fitness.ObjectiveValues[0], fitness.ObjectiveValues[1]),
+		Constraint3(x, p, q, a, b, 0, fitness.ObjectiveValues[0], fitness.ObjectiveValues[1]),
+		Constraint3(x, p, q, a, b, 1, fitness.ObjectiveValues[0], fitness.ObjectiveValues[1]),
+		Constraint3(x, p, q, a, b, 2, fitness.ObjectiveValues[0], fitness.ObjectiveValues[1]),
 	}
 	return fitness
 }
@@ -151,11 +151,11 @@ func CMOP9(x types.Genotype) types.Fitness {
 	fitness := types.Fitness{
 		ObjectiveCount: 2, ConstraintCount: 2,
 		ConstraintTypes: []types.ConstraintType{types.EqualsOrGreaterThanZero, types.EqualsOrGreaterThanZero, types.EqualsOrGreaterThanZero},
-		ObjectiveValues: []float64{objective7(x), objective8(x)},
+		ObjectiveValues: []float64{Objective7(x), Objective8(x)},
 	}
 	fitness.ConstraintValues = []float64{
-		constraint3(x, p, q, a, b, 0, fitness.ObjectiveValues[0], fitness.ObjectiveValues[1]),
-		constraint4(x, fitness.ObjectiveValues[0], fitness.ObjectiveValues[1], 2),
+		Constraint3(x, p, q, a, b, 0, fitness.ObjectiveValues[0], fitness.ObjectiveValues[1]),
+		Constraint4(x, fitness.ObjectiveValues[0], fitness.ObjectiveValues[1], 2),
 	}
 	return fitness
 }
@@ -168,11 +168,11 @@ func CMOP10(x types.Genotype) types.Fitness {
 	fitness := types.Fitness{
 		ObjectiveCount: 2, ConstraintCount: 2,
 		ConstraintTypes: []types.ConstraintType{types.EqualsOrGreaterThanZero, types.EqualsOrGreaterThanZero, types.EqualsOrGreaterThanZero},
-		ObjectiveValues: []float64{objective7(x), objective9(x)},
+		ObjectiveValues: []float64{Objective7(x), Objective9(x)},
 	}
 	fitness.ConstraintValues = []float64{
-		constraint3(x, p, q, a, b, 0, fitness.ObjectiveValues[0], fitness.ObjectiveValues[1]),
-		constraint4(x, fitness.ObjectiveValues[0], fitness.ObjectiveValues[1], 1),
+		Constraint3(x, p, q, a, b, 0, fitness.ObjectiveValues[0], fitness.ObjectiveValues[1]),
+		Constraint4(x, fitness.ObjectiveValues[0], fitness.ObjectiveValues[1], 1),
 	}
 	return fitness
 }
@@ -185,11 +185,11 @@ func CMOP11(x types.Genotype) types.Fitness {
 	fitness := types.Fitness{
 		ObjectiveCount: 2, ConstraintCount: 2,
 		ConstraintTypes: []types.ConstraintType{types.EqualsOrGreaterThanZero, types.EqualsOrGreaterThanZero, types.EqualsOrGreaterThanZero},
-		ObjectiveValues: []float64{objective7(x), objective9(x)},
+		ObjectiveValues: []float64{Objective7(x), Objective9(x)},
 	}
 	fitness.ConstraintValues = []float64{
-		constraint3(x, p, q, a, b, 0, fitness.ObjectiveValues[0], fitness.ObjectiveValues[1]),
-		constraint4(x, fitness.ObjectiveValues[0], fitness.ObjectiveValues[1], 2.1),
+		Constraint3(x, p, q, a, b, 0, fitness.ObjectiveValues[0], fitness.ObjectiveValues[1]),
+		Constraint4(x, fitness.ObjectiveValues[0], fitness.ObjectiveValues[1], 2.1),
 	}
 	return fitness
 }
@@ -202,11 +202,11 @@ func CMOP12(x types.Genotype) types.Fitness {
 	fitness := types.Fitness{
 		ObjectiveCount: 2, ConstraintCount: 2,
 		ConstraintTypes: []types.ConstraintType{types.EqualsOrGreaterThanZero, types.EqualsOrGreaterThanZero, types.EqualsOrGreaterThanZero},
-		ObjectiveValues: []float64{objective7(x), objective8(x)},
+		ObjectiveValues: []float64{Objective7(x), Objective8(x)},
 	}
 	fitness.ConstraintValues = []float64{
-		constraint3(x, p, q, a, b, 0, fitness.ObjectiveValues[0], fitness.ObjectiveValues[1]),
-		constraint4(x, fitness.ObjectiveValues[0], fitness.ObjectiveValues[1], 2.5),
+		Constraint3(x, p, q, a, b, 0, fitness.ObjectiveValues[0], fitness.ObjectiveValues[1]),
+		Constraint4(x, fitness.ObjectiveValues[0], fitness.ObjectiveValues[1], 2.5),
 	}
 	return fitness
 }
@@ -215,12 +215,12 @@ func CMOP13(x types.Genotype) types.Fitness {
 	fitness := types.Fitness{
 		ObjectiveCount: 3, ConstraintCount: 2,
 		ConstraintTypes: []types.ConstraintType{types.EqualsOrGreaterThanZero, types.EqualsOrGreaterThanZero, types.EqualsOrGreaterThanZero},
-		ObjectiveValues: []float64{objective10(x), objective11(x), objective12(x)},
+		ObjectiveValues: []float64{Objective10(x), Objective11(x), Objective12(x)},
 	}
 	g := math.Pow(fitness.ObjectiveValues[0], 2) + math.Pow(fitness.ObjectiveValues[1], 2) + math.Pow(fitness.ObjectiveValues[2], 2)
 	fitness.ConstraintValues = []float64{
-		constraint5(x, g, 9, 4),
-		constraint5(x, g, 3.61, 3.24),
+		Constraint5(x, g, 9, 4),
+		Constraint5(x, g, 3.61, 3.24),
 	}
 	return fitness
 }
@@ -229,13 +229,13 @@ func CMOP14(x types.Genotype) types.Fitness {
 	fitness := types.Fitness{
 		ObjectiveCount: 3, ConstraintCount: 3,
 		ConstraintTypes: []types.ConstraintType{types.EqualsOrGreaterThanZero, types.EqualsOrGreaterThanZero, types.EqualsOrGreaterThanZero},
-		ObjectiveValues: []float64{objective10(x), objective11(x), objective12(x)},
+		ObjectiveValues: []float64{Objective10(x), Objective11(x), Objective12(x)},
 	}
 	g := math.Pow(fitness.ObjectiveValues[0], 2) + math.Pow(fitness.ObjectiveValues[1], 2) + math.Pow(fitness.ObjectiveValues[2], 2)
 	fitness.ConstraintValues = []float64{
-		constraint5(x, g, 9, 4),
-		constraint5(x, g, 3.61, 3.24),
-		constraint5(x, g, 3.0625, 2.56),
+		Constraint5(x, g, 9, 4),
+		Constraint5(x, g, 3.61, 3.24),
+		Constraint5(x, g, 3.0625, 2.56),
 	}
 	return fitness
 }

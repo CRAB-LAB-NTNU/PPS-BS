@@ -11,3 +11,21 @@ type Plotter2D struct {
 	Min, Max                        float64
 	Solution, Extremes              [][]float64
 }
+
+type GraphicsNames int
+
+const (
+	FramesDir GraphicsNames = iota
+	VideosDir
+	FrameFormat
+	VideoFormat
+)
+
+func (g GraphicsNames) String() string {
+	return [...]string{
+		"graphics/frames/",
+		"graphics/videos/",
+		".png",
+		".mp4",
+	}[g]
+}

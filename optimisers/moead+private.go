@@ -16,8 +16,8 @@ func (m *Moead) crossover(parents []types.Individual) []types.Individual {
 	x, a, b := parents[0], parents[1], parents[2]
 
 	child := MoeadIndividual{
-		D:        m.DecisionSize,
-		genotype: make([]float64, m.DecisionSize),
+		Cmop:     m.Cmop,
+		genotype: make([]float64, m.Cmop.DecisionVariables),
 	}
 
 	for i := range child.Genotype() {
@@ -30,7 +30,7 @@ func (m *Moead) crossover(parents []types.Individual) []types.Individual {
 
 	child.PolynomialMutation(m.DistributionIndex)
 	child.Repair()
-	child.UpdateFitness(m.CMOP)
+	child.UpdateFitness()
 	return []types.Individual{&child}
 }
 
@@ -51,8 +51,8 @@ func (m *Moead) pushProblems(j int, y types.Individual) bool {
 func (m *Moead) pullProblems(j int, y types.Individual, eps float64) bool {
 	xF := m.population[j].Fitness()
 	yF := y.Fitness()
-	xCV := constraintViolation(xF)
-	yCV := constraintViolation(yF)
+	xCV := xF.ConstraintViolation()
+	yCV := yF.ConstraintViolation()
 	xS := tchebycheff(xF.ObjectiveValues, m.idealPoint, m.Weights[j])
 	yS := tchebycheff(yF.ObjectiveValues, m.idealPoint, m.Weights[j])
 
@@ -107,12 +107,12 @@ func (m *Moead) boundarySearch() {
 		}
 
 		middlePoint := arrays.Middle(p.Genotype(), pair.Genotype())
-		ind := MoeadIndividual{D: len(p.Genotype())}
+		ind := MoeadIndividual{Cmop: m.Cmop}
 		ind.SetGenotype(middlePoint)
 		ind.Repair()
-		ind.UpdateFitness(m.CMOP)
+		ind.UpdateFitness()
 
-		if feasible(ind.Fitness()) {
+		if ind.Fitness().Feasible() {
 			m.ArchiveCopy[j] = &ind
 		} else {
 			m.population[i] = &ind
@@ -124,7 +124,7 @@ func (m *Moead) boundarySearch() {
 		m.binaryCompleted = true
 		m.maxViolation = -1
 		for _, p := range m.population {
-			cv := constraintViolation(p.Fitness())
+			cv := p.Fitness().ConstraintViolation()
 			if cv > m.maxViolation {
 				m.maxViolation = cv
 			}
@@ -135,6 +135,7 @@ func (m *Moead) boundarySearch() {
 
 func (m Moead) selectRandomPairs() []int {
 	indices := make([]int, len(m.population))
+
 	for i := range m.population {
 		indices[i] = rand.Intn(len(m.archive))
 	}

@@ -2,22 +2,7 @@ package types
 
 import (
 	"math"
-	"reflect"
-	"runtime"
-	"strings"
 )
-
-// CMOP is a interface describing a multi objective optimisation problem
-type CMOP struct {
-	NumberOfObjectives int
-	Calculate          func(Genotype) Fitness
-}
-
-func (c CMOP) Name() string {
-	abs := runtime.FuncForPC(reflect.ValueOf(c.Calculate).Pointer()).Name()
-	split := strings.Split(abs, ".")
-	return split[len(split)-1]
-}
 
 /*
 // Objective describes an objective of a problem
@@ -56,10 +41,10 @@ type ConstraintFunction func(Genotype) float64
 */
 // MOEA is an interface describing Multi Objective Evolutionary Algorithms
 type MOEA interface {
-	MaxGeneration() int
+	MaxEvaluations() int
 	MaxViolation() float64
 	Population() []Individual
-	Initialise()
+	Initialise(CMOP)
 	FunctionEvaluations() int
 	FeasibleRatio() float64
 	Reset()
@@ -75,8 +60,9 @@ type MOEA interface {
 type Individual interface {
 	Genotype() Genotype //TODO: se på måter å gjøre dette mer generelt senere
 	Fitness() Fitness
-	UpdateFitness(CMOP) Fitness
+	UpdateFitness() Fitness
 	Copy() Individual
+	Initialise()
 	//Mutate()
 	//ConstraintViolation()
 	//UpdateConstraintViolation()
@@ -94,12 +80,30 @@ type Fitness struct {
 	ConstraintTypes                   []ConstraintType
 }
 
-func (f Fitness) TotalViolation() float64 {
+/*
+ConstraintViolation returns the total violation of an individual.
+Evaluates both Greater or Less than zero.
+*/
+func (f Fitness) ConstraintViolation() float64 {
 	var total float64
-	for _, g := range f.ConstraintValues {
-		total += math.Max(0, g)
+	for i := range f.ConstraintTypes {
+		conVal := f.ConstraintValues[i]
+		switch f.ConstraintTypes[i] {
+		case EqualsOrGreaterThanZero:
+			total += math.Abs(math.Min(conVal, 0))
+		case EqualsOrLessThanZero:
+			total += math.Max(conVal, 0)
+		}
 	}
 	return total
+}
+
+/*
+Feasible returns true if an individual is feasible or false if it's infeasible,
+according to it's constraint values.
+*/
+func (f Fitness) Feasible() bool {
+	return f.ConstraintViolation() <= 0
 }
 
 type Genotype []float64

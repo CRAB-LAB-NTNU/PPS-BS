@@ -2,13 +2,10 @@ package pps
 
 import (
 	"fmt"
-	"log"
 	"math"
-	"os"
-	"os/exec"
-	"strconv"
 	"time"
 
+	"github.com/CRAB-LAB-NTNU/PPS-BS/arrays"
 	"github.com/CRAB-LAB-NTNU/PPS-BS/biooperators"
 	"github.com/CRAB-LAB-NTNU/PPS-BS/configs"
 	"github.com/CRAB-LAB-NTNU/PPS-BS/plotter"
@@ -20,98 +17,106 @@ type PPS struct {
 	Cmop                                                           types.CMOP
 	Moea                                                           types.MOEA
 	stage                                                          types.Stage
-	idealPoints, nadirPoints, paretoPoints                         [][]float64
+	idealPoints, nadirPoints                                       [][]float64
 	rk, Delta, Epsilon                                             float64
 	SearchingPreference, ConstraintRelaxation, RelaxationReduction float64
-	TC, L, SwitchPoint                                             int
+	TC, L, SwitchPoint, generation                                 int
 	improvedEpsilon, MetricData                                    []float64
 	Config                                                         configs.PPS
 	Result                                                         types.Results
 	DoBoundary                                                     bool
 	ConstraintUpdateMethod                                         types.ConstraintMethod
-}
-
-func (pps *PPS) Reset() {
-	pps.Moea.Reset()
-	pps.Initialise()
+	plotter                                                        plotter.PpsPlotter
 }
 
 // Initialise initialises the PPS framework with a given CMOP, MOEA and CHM
 func (pps *PPS) Initialise() {
-	pps.improvedEpsilon = make([]float64, pps.Moea.MaxGeneration())
-	pps.Moea.Initialise()
-	pps.idealPoints = generateEmpty2DSliceFloat64(pps.Moea.MaxGeneration(), pps.Cmop.NumberOfObjectives)
-	pps.nadirPoints = generateEmpty2DSliceFloat64(pps.Moea.MaxGeneration(), pps.Cmop.NumberOfObjectives)
+	pps.Moea.Initialise(pps.Cmop)
+
+	genMax := pps.Moea.MaxEvaluations() / len(pps.Moea.Population())
+
+	pps.improvedEpsilon = make([]float64, genMax)
+	pps.idealPoints = arrays.GenerateEmpty2DSliceFloat64(genMax, pps.Cmop.ObjectiveCount)
+	pps.nadirPoints = arrays.GenerateEmpty2DSliceFloat64(genMax, pps.Cmop.ObjectiveCount)
 	pps.rk = 1.0
 	pps.stage = types.Push
-	if points, err := plotter.ParseDatFile("arraydata/pf_data/" + pps.Cmop.Name() + ".dat"); err == nil {
-		pps.paretoPoints = points
-	} else {
-		fmt.Println("ERROR", err)
+	if pps.Config.ExportVideo {
+		pop := pps.Moea.Population()
+		arc := pps.Moea.Archive()
+		pps.plotter = plotter.PpsPlotter{
+			Population: &pop,
+			Archive:    &arc,
+			Ideal:      &pps.idealPoints,
+			Nadir:      &pps.nadirPoints,
+			Epsilon:    &pps.improvedEpsilon,
+			Generation: &pps.generation,
+			Stage:      &pps.stage,
+			Config:     &pps.Config,
+			Cmop:       &pps.Cmop,
+		}
 	}
-}
 
-func generateEmpty2DSliceFloat64(outerLength, innerLength int) [][]float64 {
-	slice := make([][]float64, outerLength)
-	for i := range slice {
-		slice[i] = make([]float64, innerLength)
-	}
-	return slice
 }
 
 func (pps *PPS) Run() float64 {
-	for generation := 0; pps.Moea.FunctionEvaluations() < pps.Moea.MaxGeneration(); generation++ {
+	for pps.Moea.FunctionEvaluations() < pps.Moea.MaxEvaluations() {
 
 		// First we set the ideal and nadir points for this generation based on the current population
 		ip, np := biooperators.CalculateNadirAndIdealPoints(pps.Moea.Population())
-		pps.idealPoints[generation] = ip
-		pps.nadirPoints[generation] = np
+		pps.idealPoints[pps.generation] = ip
+		pps.nadirPoints[pps.generation] = np
 
-		if generation >= pps.L {
-			pps.CalculateMaxChange(generation)
+		if pps.generation >= pps.L {
+			pps.CalculateMaxChange(pps.generation)
 		}
 		// If the change in ideal or nadir points is lower than a user defined value then we change phases
-		if generation <= pps.TC {
+		if pps.generation <= pps.TC {
 			if pps.rk <= pps.Epsilon && pps.stage < types.BorderSearch {
 				if pps.DoBoundary {
 					pps.stage = types.BorderSearch
 				} else {
 					pps.stage = types.Pull
-					pps.improvedEpsilon[generation], pps.improvedEpsilon[0] = pps.Moea.MaxViolation(), pps.Moea.MaxViolation()
+					pps.improvedEpsilon[pps.generation], pps.improvedEpsilon[0] = pps.Moea.MaxViolation(), pps.Moea.MaxViolation()
 				}
 			} else if pps.stage < types.Pull && pps.Moea.BinaryDone() {
 				pps.stage = types.Pull
-				pps.improvedEpsilon[generation], pps.improvedEpsilon[0] = pps.Moea.MaxViolation(), pps.Moea.MaxViolation()
+				pps.improvedEpsilon[pps.generation], pps.improvedEpsilon[0] = pps.Moea.MaxViolation(), pps.Moea.MaxViolation()
 			} else if pps.stage == types.Pull {
 
 				switch pps.ConstraintUpdateMethod {
 				case types.ImprovedEpsilon:
-					pps.UpdateImprovedEpsilon(generation)
+					pps.UpdateImprovedEpsilon()
 				case types.Epsilon:
-					pps.UpdateEpsilon(generation)
+					pps.UpdateEpsilon()
 				}
 
 			}
 		} else {
-			pps.improvedEpsilon[generation] = 0
+			pps.improvedEpsilon[pps.generation] = 0
 		}
-		pps.printData(generation)
+		//pps.printData()
 		// We evolve the population one generation
 		// How this is done will depend on the underlying moea and constraint-handling method
+
 		pps.Moea.Evolve(pps.stage, pps.improvedEpsilon)
 
 		if pps.Config.ExportVideo {
-			pps.plot(generation)
+			// Hacky way of fixing archive reference
+			arc := pps.Moea.Archive()
+			pps.plotter.Archive = &arc
+			pps.plotter.PlotFrame()
 		}
 		if pps.Config.PlotEval {
 			pps.MetricData = append(pps.MetricData, pps.Performance())
 		}
+		pps.generation++
 	}
 	if pps.Config.ExportVideo {
-		pps.ExportVideo()
+		pps.plotter.ExportVideo()
+
 	}
 	if pps.Config.PlotEval {
-		pps.plotMetric()
+		//plotter.PlotMetric()
 	}
 
 	return pps.Performance()
@@ -119,11 +124,11 @@ func (pps *PPS) Run() float64 {
 
 func (pps PPS) RunTest() {
 	for i := 0; i < pps.Config.Runs; i++ {
-		fmt.Println(pps.Cmop.Name(), "RUN:", i+1)
+		pps.Initialise()
+		fmt.Println(pps.Cmop.Name, "RUN:", i+1)
 		pps.Result.Add(pps.Run())
-		pps.Reset()
 	}
-	fmt.Println("PROBLEM:", pps.Cmop.Name())
+	fmt.Println("PROBLEM:", pps.Cmop.Name)
 	fmt.Println("Boundary Search:", pps.DoBoundary)
 	fmt.Println("Constraint method:", pps.ConstraintUpdateMethod)
 	fmt.Println("MEAN:", pps.Result.Mean())
@@ -132,7 +137,8 @@ func (pps PPS) RunTest() {
 	fmt.Println()
 }
 
-func (pps *PPS) UpdateImprovedEpsilon(k int) {
+func (pps *PPS) UpdateImprovedEpsilon() {
+	k := pps.generation
 	if pps.Moea.FeasibleRatio() < pps.SearchingPreference {
 		pps.improvedEpsilon[k] = (1 - pps.ConstraintRelaxation) * pps.improvedEpsilon[k-1]
 	} else {
@@ -141,7 +147,8 @@ func (pps *PPS) UpdateImprovedEpsilon(k int) {
 
 }
 
-func (pps *PPS) UpdateEpsilon(k int) {
+func (pps *PPS) UpdateEpsilon() {
+	k := pps.generation
 	pps.improvedEpsilon[k] = (1 - pps.ConstraintRelaxation) * pps.improvedEpsilon[k-1]
 }
 
@@ -155,7 +162,7 @@ func (pps *PPS) CalculateMaxChange(generation int) {
 
 func (pps PPS) rx(k int, points [][]float64) float64 {
 	m := math.SmallestNonzeroFloat64
-	for i := 0; i < pps.Cmop.NumberOfObjectives; i++ {
+	for i := 0; i < pps.Cmop.ObjectiveCount; i++ {
 		cur := points[k][i]
 		offset := points[k-pps.L][i]
 		dist := math.Abs(cur - offset)
@@ -170,11 +177,12 @@ func (pps PPS) Stage() string {
 	return []string{"Push", "Border Search", "Pull"}[pps.stage]
 }
 
+/*
 func (pps PPS) plot(generation int) {
 
 	gen := strconv.Itoa(generation)
 	eps := strconv.FormatFloat(pps.improvedEpsilon[generation], 'E', -1, 64)
-	prob := pps.Cmop.Name()
+	prob := pps.Cmop.Name
 	stage := pps.Stage()
 
 	path := "graphics/gif/" + prob
@@ -190,14 +198,14 @@ func (pps PPS) plot(generation int) {
 		Min:      pps.Config.VideoMin,
 		Max:      pps.Config.VideoMax,
 		Filename: path + "/" + gen + ".png",
-		Solution: pps.paretoPoints,
+		Solution: pps.Cmop.TrueParetoFront(),
 		Extremes: [][]float64{pps.idealPoints[generation], pps.nadirPoints[generation], pps.Moea.Ideal()},
 	}
 	plotter.Plot(pps.Moea.Population(), pps.Moea.Archive())
 }
 
 func (pps PPS) plotMetric() {
-	prob := pps.Cmop.Name()
+	prob := pps.Cmop.Name
 	path := "graphics/metric/" + prob
 	if err := os.MkdirAll(path, 0755); err != nil {
 		log.Fatal(err)
@@ -212,7 +220,7 @@ func (pps PPS) plotMetric() {
 }
 
 func (pps PPS) ExportVideo() {
-	prob := pps.Cmop.Name()
+	prob := pps.Cmop.Name
 	path := "graphics/vids/"
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		fmt.Println("path eksisterer ikke, produserer.")
@@ -231,15 +239,16 @@ func (pps PPS) ExportVideo() {
 		log.Fatal(err)
 	}
 }
-
+*/
 func (pps PPS) Performance() float64 {
-	return pps.Config.Metric(pps.Moea.Archive(), pps.paretoPoints)
+	return pps.Config.Metric(pps.Moea.Archive(), pps.Cmop.TrueParetoFront())
 }
 
-func (pps *PPS) printData(gen int) {
+func (pps *PPS) printData() {
+	gen := pps.generation
 	t := time.Now()
 	formatted := fmt.Sprintf("%d-%02d-%02dT%02d:%02d:%02d",
 		t.Year(), t.Month(), t.Day(),
 		t.Hour(), t.Minute(), t.Second())
-	fmt.Println(formatted, ",", gen, ",", pps.Stage(), ",", pps.Moea.MaxViolation(), ",", pps.Moea.FeasibleRatio(), ",", pps.improvedEpsilon[gen], ",", pps.Performance())
+	fmt.Println(formatted, ",", gen, ",", pps.Stage(), ",", pps.Moea.MaxViolation(), ",", pps.Moea.FeasibleRatio(), ",", pps.improvedEpsilon[gen] /*, ",", pps.Performance()*/)
 }

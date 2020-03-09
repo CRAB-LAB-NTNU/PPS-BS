@@ -5,13 +5,14 @@ import (
 	"math/rand"
 
 	"github.com/CRAB-LAB-NTNU/PPS-BS/types"
+	"github.com/CRAB-LAB-NTNU/PPS-BS/utils"
 )
 
 /*MoeadIndividual is a struct containing information about an individual in the population
 of an evolutionary algorithm.
 */
 type MoeadIndividual struct {
-	D        int
+	Cmop     types.CMOP
 	genotype types.Genotype
 	fitness  types.Fitness
 }
@@ -26,7 +27,7 @@ func (i *MoeadIndividual) SetFitness(f types.Fitness) {
 
 func (i MoeadIndividual) Copy() types.Individual {
 	ind := MoeadIndividual{
-		D:        i.D,
+		Cmop:     i.Cmop,
 		fitness:  i.Fitness(),
 		genotype: i.Genotype(),
 	}
@@ -47,27 +48,33 @@ func (i MoeadIndividual) Fitness() types.Fitness {
 
 /*UpdateFitness updates the fitness value of an individual
  */
-func (i *MoeadIndividual) UpdateFitness(cmop types.CMOP) types.Fitness {
-	i.fitness = cmop.Calculate(i.Genotype())
+func (i *MoeadIndividual) UpdateFitness() types.Fitness {
+	i.fitness = i.Cmop.Evaluate(i.Genotype())
 	return i.Fitness()
 }
 
-/*InitialiseRandom initialises the individuals genotype with random floats in the range [0,1]
+func (i MoeadIndividual) D() int {
+	return i.Cmop.DecisionVariables
+}
+
+/*Initialise initialises the individuals genotype with random floats in the range [0,1]
  */
-func (i *MoeadIndividual) InitialiseRandom(cmop types.CMOP) {
-	i.genotype = make([]float64, i.D)
-	for j := 0; j < i.D; j++ {
-		i.genotype[j] = rand.Float64()
+func (i *MoeadIndividual) Initialise() {
+	i.genotype = make([]float64, i.D())
+	for j := range i.genotype {
+		interval := i.Cmop.DecisionInterval[j]
+		i.genotype[j] = utils.RandomFloat64Range(interval[0], interval[1])
 	}
-	i.UpdateFitness(cmop)
+	i.UpdateFitness()
 }
 
 func (ind *MoeadIndividual) Repair() {
-	for i := 0; i < ind.D; i++ {
-		if ind.genotype[i] > 1 {
-			ind.genotype[i] = 1
-		} else if ind.genotype[i] < 0 {
-			ind.genotype[i] = 0
+	for i, gene := range ind.genotype {
+		min, max := ind.Cmop.DecisionInterval[i][0], ind.Cmop.DecisionInterval[i][1]
+		if gene > max {
+			ind.genotype[i] = max
+		} else if gene < min {
+			ind.genotype[i] = min
 		}
 	}
 }
@@ -83,7 +90,7 @@ func (i *MoeadIndividual) PolynomialMutation(m float64) {
 	}
 
 	for pos, allele := range i.genotype {
-		if rand.Float64() > 1/float64(i.D) {
+		if rand.Float64() > 1/float64(i.D()) {
 			continue
 		}
 		u := rand.Float64()

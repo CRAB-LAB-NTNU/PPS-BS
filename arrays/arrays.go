@@ -172,3 +172,11 @@ func Middle(a, b []float64) []float64 {
 	}
 	return middle
 }
+
+func GenerateEmpty2DSliceFloat64(outerLength, innerLength int) [][]float64 {
+	slice := make([][]float64, outerLength)
+	for i := range slice {
+		slice[i] = make([]float64, innerLength)
+	}
+	return slice
+}
