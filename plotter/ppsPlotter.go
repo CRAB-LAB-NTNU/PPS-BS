@@ -83,7 +83,7 @@ func (p PpsPlotter) ExportVideo() {
 	}
 	cmd := exec.Command("ffmpeg", "-framerate", "20", "-i", p.framePath()+"/%00d"+FrameFormat.String(), p.videoFile())
 	if err := cmd.Run(); err != nil {
-		fmt.Println("Feil ved laging av video")
+		fmt.Println("Feil ved laging av video, prøv \nsudo apt install ffmpeg")
 		log.Fatal(err)
 	}
 }
