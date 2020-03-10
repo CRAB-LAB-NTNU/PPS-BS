@@ -1,23 +1,21 @@
 package types
 
-// Stage is an enum defining which phase PPS is in. Can either be Push or Pull
-type Stage int
+//Stage interface defines all the menthods needed to be a stage.
+//Might be overkill to have this as an interface and not a single struct
+type Stage interface {
+	Stage() StageType
+	SetOver()
+	IsOver() bool
+}
+
+type StageType int
 
 const (
 	// Push PPS is in the push stage and constraints are ignored
-	Push Stage = iota
-	// BorderSearch PPS is in the stage between Push and Pull
-	BorderSearch
-	// Pull PPS is in the pull stage and constraints are handled
+	Push StageType = iota
+	// BinarySearch PPS is a the stage between Push and Pull
+	BinarySearch
+
+	//Pull PPS is in the pull stage and constraints are handled
 	Pull
-)
-
-// ConstraintMethod is an enum controlling which constraint handling method to use.
-type ConstraintMethod int
-
-const (
-	// ImprovedEpsilon sets the Improved Epsilon constraint handling method
-	ImprovedEpsilon ConstraintMethod = iota
-	// Epsilon sets the Epsilon constraint handling method
-	Epsilon
 )

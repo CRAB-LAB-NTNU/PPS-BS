@@ -1,4 +1,4 @@
-package r2s
+package chm
 
 import (
 	"fmt"
@@ -14,39 +14,60 @@ type R2S struct {
 	//InitialDeltaIn, InitialDeltaOut float64
 	DeltaIn, DeltaOut        []float64
 	ActiveConstraints        []bool
-	val                      float64
-	cs, FESacd, FESmax, FESc int
+	Val                      float64
+	Cs, FESc, FESmax, FESacd int
 }
 
-func (r2s *R2S) Initialize(generations int, zMin, feasibleRatio float64, population []types.Individual) {
+func NewR2S(FESc, FESacd, cs int, val, zMin float64, constraintsCount, generations int) *R2S {
+	return &R2S{
+		DeltaIn:           make([]float64, generations),
+		DeltaOut:          make([]float64, generations),
+		ActiveConstraints: make([]bool, constraintsCount),
+		FESmax:            generations,
+		FESc:              FESc,
+		FESacd:            FESacd,
+		Cs:                cs,
+		Val:               val,
+		ZMin:              zMin,
+	}
+}
+
+func (r2s *R2S) Name() string {
+	return "R2S"
+}
+
+func (r2s *R2S) Threshold(gen int) float64 {
+	return r2s.DeltaOut[gen]
+}
+
+func (r2s *R2S) Initialise() {
+
+}
+
+/*
+func (r2s *R2S) Initialise(generations int, feasibleRatio float64, population []types.Individual) {
 	fmt.Println("Initialising R2S")
 	r2s.DeltaIn, r2s.DeltaOut = make([]float64, generations), make([]float64, generations)
 	r2s.ActiveConstraints = make([]bool, population[0].Fitness().ConstraintCount)
 	//TODO Set at parameter in a better way
-	r2s.InitializeDeltaIn(2)
-	r2s.InitializeDeltaOut(feasibleRatio, population)
-	r2s.InitializeZMin(zMin)
-	r2s.InitializeZ()
-	r2s.UpdateZ()
-
-	//TODO: allow user to set these parameters
-	r2s.cs = 25
-	r2s.FESacd = 100000
-	r2s.val = 0.01
-	r2s.FESmax = 300000
-	r2s.FESc = 300000 * 9 / 10
+	//TODO At the end of push phase set these using the population instead
+	r2s.initializeDeltaIn(2)
+	r2s.initializeDeltaOut(feasibleRatio, population)
+	r2s.initializeZ()
+	r2s.updateZ()
 
 }
+*/
 
 // InitializeDeltaIn is used to initialize deltaIn to the input parameter passed to the method
-func (r2s *R2S) InitializeDeltaIn(initialDeltaIn float64) {
+func (r2s *R2S) initializeDeltaIn(initialDeltaIn float64) {
 	//TODO: See how what effect changing to calculate the max constraint violation of all minimum constraint violations has
 	fmt.Println("DeltaIn[0]: ", initialDeltaIn)
 	r2s.DeltaIn[0] = initialDeltaIn
 }
 
 // InitializeDeltaOut is used to set an initial value for deltaOut
-func (r2s *R2S) InitializeDeltaOut(feasibleRatio float64, population []types.Individual) {
+func (r2s *R2S) initializeDeltaOut(feasibleRatio float64, population []types.Individual) {
 
 	//If number of feasible solutions is below 20% we calculate using maxviolation of the 20 "best" individuals
 	//If not it is set to 1.
@@ -68,9 +89,9 @@ func (r2s *R2S) InitializeDeltaOut(feasibleRatio float64, population []types.Ind
 			}
 		}
 		sumConstraintViolation := 0.0
-		for i, individual := range bestIndividuals {
-			fmt.Println(i, "\tTotal Constraint Violation: ", individual.Fitness().TotalViolationAbsolute())
-			sumConstraintViolation += individual.Fitness().TotalViolationAbsolute()
+		for _, individual := range bestIndividuals {
+			//fmt.Println(i, "\tTotal Constraint Violation: ", individual.Fitness().TotalViolation())
+			sumConstraintViolation += individual.Fitness().TotalViolation()
 		}
 		r2s.DeltaOut[0] = sumConstraintViolation / float64(len(bestIndividuals))
 	} else {
@@ -80,8 +101,18 @@ func (r2s *R2S) InitializeDeltaOut(feasibleRatio float64, population []types.Ind
 
 }
 
+// Update updates the deltaIn and deltaOut of r2s.
+// Require that cfe is a float to allow the use of interface for constraint handling.
+func (r2s *R2S) Update(t int, cfe float64) {
+
+	if r2s.HasActiveConstraints() {
+		r2s.updateDeltaIn(t, int(cfe))
+		r2s.updateDeltaOut(t, int(cfe))
+	}
+}
+
 // UpdateDeltaIn is used to update deltaIn for each generation
-func (r2s *R2S) UpdateDeltaIn(t, cfe int) {
+func (r2s *R2S) updateDeltaIn(t int, cfe int) {
 
 	minDeltaIn := 0.002 * r2s.DeltaIn[0]
 
@@ -96,7 +127,7 @@ func (r2s *R2S) UpdateDeltaIn(t, cfe int) {
 }
 
 // UpdateDeltaOut is used to calculate a new value for deltaOut each generation
-func (r2s *R2S) UpdateDeltaOut(t, cfe int) {
+func (r2s *R2S) updateDeltaOut(t int, cfe int) {
 
 	if cfe <= r2s.FESc {
 		p1 := r2s.DeltaOut[0]
@@ -114,13 +145,8 @@ func (r2s *R2S) UpdateDeltaOut(t, cfe int) {
 
 }
 
-// InitializeZMin initialises Zmin to the input parameter
-func (r2s *R2S) InitializeZMin(zMin float64) {
-	r2s.ZMin = zMin
-}
-
 // InitializeZ initialises Z based on the initial deltaout value
-func (r2s *R2S) InitializeZ() {
+func (r2s *R2S) initializeZ() {
 
 	numerator := -5 - math.Log(r2s.DeltaOut[0])
 	denominator := math.Log(0.05)
@@ -129,17 +155,18 @@ func (r2s *R2S) InitializeZ() {
 }
 
 // UpdateZ Updates Z using the Zmin value and the current Z value
-func (r2s *R2S) UpdateZ() {
+func (r2s *R2S) updateZ() {
 	//r2s.Z = math.Max(r2s.Z, r2s.ZMin)
 	r2s.Z = 0.3*r2s.Z + 0.7*r2s.ZMin
 }
 
+//ACD check for active constraints near an assumed optimal individual
 func (r2s *R2S) ACD(iter, cfe int, fitness types.Fitness) {
 	activeConstraints := make([]bool, fitness.ConstraintCount)
-	if iter%r2s.cs == 0 && cfe <= r2s.FESacd {
+	if iter%r2s.Cs == 0 && cfe <= r2s.FESacd {
 		fmt.Println("Generation:", iter, "\tUpdating active constraints!")
 		for constraint, constraintVal := range fitness.ConstraintValues {
-			if r2s.ConstraintIsActive(constraintVal) {
+			if r2s.constraintIsActive(constraintVal) {
 				activeConstraints[constraint] = true
 			}
 		}
@@ -151,10 +178,11 @@ func (r2s *R2S) ACD(iter, cfe int, fitness types.Fitness) {
 
 }
 
-func (r2s *R2S) ConstraintIsActive(constraintVal float64) bool {
-	return math.Abs(constraintVal) <= r2s.val
+func (r2s *R2S) constraintIsActive(constraintVal float64) bool {
+	return math.Abs(constraintVal) <= r2s.Val
 }
 
+//HasActiveConstraints check if any of the constraints of the problem are seen as active
 func (r2s R2S) HasActiveConstraints() bool {
 	for _, val := range r2s.ActiveConstraints {
 		if val {
@@ -164,11 +192,11 @@ func (r2s R2S) HasActiveConstraints() bool {
 	return false
 }
 
-func (r2s R2S) ConstraintViolation(t int, fitness types.Fitness) float64 {
+func (r2s R2S) Violation(t int, fitness types.Fitness) float64 {
 	var total float64
 
 	if !r2s.HasActiveConstraints() {
-		return fitness.TotalViolationAbsolute()
+		return fitness.TotalViolation()
 	}
 
 	for c, isActiveConstraint := range r2s.ActiveConstraints {
