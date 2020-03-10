@@ -5,7 +5,7 @@ import (
 	"github.com/CRAB-LAB-NTNU/PPS-BS/types"
 )
 
-type LIR struct {
+type lir struct {
 	CMOP1  types.CMOP
 	CMOP2  types.CMOP
 	CMOP3  types.CMOP
@@ -22,7 +22,7 @@ type LIR struct {
 	CMOP14 types.CMOP
 }
 
-func buildCmop1() types.CMOP {
+func buildLirCmop1() types.CMOP {
 	cmop1 := types.CMOP{
 		ConstraintCount: 2, ObjectiveCount: 2,
 		DecisionVariables: 30,
@@ -61,8 +61,8 @@ func initFitness(cmop types.CMOP) types.Fitness {
 	}
 }
 
-func Lir() LIR {
-	return LIR{
-		CMOP1: buildCmop1(),
+func Lir() lir {
+	return lir{
+		CMOP1: buildLirCmop1(),
 	}
 }

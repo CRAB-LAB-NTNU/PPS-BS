@@ -79,6 +79,8 @@ func (pps *PPS) Run() float64 {
 					pps.improvedEpsilon[pps.generation], pps.improvedEpsilon[0] = pps.Moea.MaxViolation(), pps.Moea.MaxViolation()
 				}
 			} else if pps.stage < types.Pull && pps.Moea.BinaryDone() {
+				pop := pps.Moea.Population()
+				pps.plotter.Population = &pop
 				pps.stage = types.Pull
 				pps.improvedEpsilon[pps.generation], pps.improvedEpsilon[0] = pps.Moea.MaxViolation(), pps.Moea.MaxViolation()
 			} else if pps.stage == types.Pull {
@@ -94,7 +96,7 @@ func (pps *PPS) Run() float64 {
 		} else {
 			pps.improvedEpsilon[pps.generation] = 0
 		}
-		//pps.printData()
+		pps.printData()
 		// We evolve the population one generation
 		// How this is done will depend on the underlying moea and constraint-handling method
 
@@ -177,6 +179,19 @@ func (pps PPS) Stage() string {
 	return []string{"Push", "Border Search", "Pull"}[pps.stage]
 }
 
+func (pps PPS) Performance() float64 {
+	return pps.Config.Metric(pps.Moea.Archive(), pps.Cmop.TrueParetoFront())
+}
+
+func (pps *PPS) printData() {
+	gen := pps.generation
+	t := time.Now()
+	formatted := fmt.Sprintf("%d-%02d-%02dT%02d:%02d:%02d",
+		t.Year(), t.Month(), t.Day(),
+		t.Hour(), t.Minute(), t.Second())
+	fmt.Println(formatted, ",", gen, ",", pps.Stage(), ",", pps.Moea.MaxViolation(), ",", pps.Moea.FeasibleRatio(), ",", pps.improvedEpsilon[gen] /*, ",", pps.Performance()*/)
+}
+
 /*
 func (pps PPS) plot(generation int) {
 
@@ -240,15 +255,3 @@ func (pps PPS) ExportVideo() {
 	}
 }
 */
-func (pps PPS) Performance() float64 {
-	return pps.Config.Metric(pps.Moea.Archive(), pps.Cmop.TrueParetoFront())
-}
-
-func (pps *PPS) printData() {
-	gen := pps.generation
-	t := time.Now()
-	formatted := fmt.Sprintf("%d-%02d-%02dT%02d:%02d:%02d",
-		t.Year(), t.Month(), t.Day(),
-		t.Hour(), t.Minute(), t.Second())
-	fmt.Println(formatted, ",", gen, ",", pps.Stage(), ",", pps.Moea.MaxViolation(), ",", pps.Moea.FeasibleRatio(), ",", pps.improvedEpsilon[gen] /*, ",", pps.Performance()*/)
-}

@@ -75,12 +75,15 @@ func (p PpsPlotter) PlotFrame() {
 }
 
 func (p PpsPlotter) ExportVideo() {
-	if _, err := os.Stat(p.videoPath()); os.IsNotExist(err) {
-		os.MkdirAll(p.videoPath(), 0755)
+
+	if err := p.controlPath(p.videoPath()); err != nil {
+		log.Fatal(err)
 	}
+
 	if err := os.Remove(p.videoFile()); err == nil {
 		fmt.Println("Removed old video file.", p.videoFile())
 	}
+
 	cmd := exec.Command("ffmpeg", "-framerate", "20", "-i", p.framePath()+"/%00d"+FrameFormat.String(), p.videoFile())
 	if err := cmd.Run(); err != nil {
 		fmt.Println("Feil ved laging av video, prøv \nsudo apt install ffmpeg")
@@ -106,11 +109,12 @@ func (p PpsPlotter) videoFile() string {
 }
 
 func (p PpsPlotter) controlPath(path string) error {
-	if err := os.MkdirAll(path, 0755); err != nil {
-		return err
-	} else {
-		return nil
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		if innerErr := os.MkdirAll(path, 0755); innerErr != nil {
+			return innerErr
+		}
 	}
+	return nil
 }
 
 func (p PpsPlotter) individualScatter(pop []types.Individual, color color.RGBA) *plotter.Scatter {
