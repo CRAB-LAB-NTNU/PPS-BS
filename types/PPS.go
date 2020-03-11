@@ -3,7 +3,8 @@ package types
 //Stage interface defines all the menthods needed to be a stage.
 //Might be overkill to have this as an interface and not a single struct
 type Stage interface {
-	Stage() StageType
+	Name() string
+	Type() StageType //TODO Fix this in the structs
 	SetOver()
 	IsOver() bool
 }

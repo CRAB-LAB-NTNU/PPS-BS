@@ -10,6 +10,7 @@ import (
 )
 
 type Push struct {
+	name               string
 	rk, delta, epsilon float64
 	l                  int
 	isOver             bool
@@ -17,17 +18,22 @@ type Push struct {
 	ip, np             [][]float64
 }
 
-func NewPush(delta, epsilon float64, l int, generations int, decisionVariables int) *Push {
+func NewPush(delta, epsilon float64, l int, generations int, objectiveValues int) *Push {
 	return &Push{
-		rk:      -1,
+		name:    "Push",
+		rk:      1,
 		delta:   delta,
 		epsilon: epsilon,
 		l:       l,
 		isOver:  false,
 		stage:   types.Push,
-		ip:      arrays.Zeros2DFloat64(generations, decisionVariables),
-		np:      arrays.Zeros2DFloat64(generations, decisionVariables),
+		ip:      arrays.Zeros2DFloat64(generations, objectiveValues),
+		np:      arrays.Zeros2DFloat64(generations, objectiveValues),
 	}
+}
+
+func (p Push) Name() string {
+	return p.name
 }
 
 func (p Push) Stage() types.StageType {

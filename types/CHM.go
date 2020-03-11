@@ -3,7 +3,7 @@ package types
 type CHM interface {
 	Name() string
 	Threshold(int) float64
-	Initialise()
+	Initialise(int, float64)
 	Update(int, float64)
 	Violation(int, Fitness) float64
 }

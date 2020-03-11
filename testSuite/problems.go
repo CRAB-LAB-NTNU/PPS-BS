@@ -134,6 +134,7 @@ func CMOP2(x types.Genotype) types.Fitness {
 func CMOP3(x types.Genotype) types.Fitness {
 	fitness := CMOP1(x)
 	fitness.ConstraintCount = 3
+	fitness.ConstraintTypes = append(fitness.ConstraintTypes, types.EqualsOrGreaterThanZero)
 	fitness.ConstraintValues = append(fitness.ConstraintValues, constraint2(x))
 	return fitness
 }
@@ -141,6 +142,7 @@ func CMOP3(x types.Genotype) types.Fitness {
 func CMOP4(x types.Genotype) types.Fitness {
 	fitness := CMOP2(x)
 	fitness.ConstraintCount = 3
+	fitness.ConstraintTypes = append(fitness.ConstraintTypes, types.EqualsOrGreaterThanZero)
 	fitness.ConstraintValues = append(fitness.ConstraintValues, constraint2(x))
 	return fitness
 }

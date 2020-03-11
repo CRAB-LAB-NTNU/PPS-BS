@@ -125,6 +125,38 @@ func (m *Moead) selectIndividualsForCrossover(hood []int) (types.Individual, typ
 
 }
 
+func (m Moead) selectRandomPairs() []int {
+	indices := make([]int, len(m.population))
+	for i := range m.population {
+		indices[i] = rand.Intn(len(m.archive))
+	}
+	return indices
+}
+
+func (m Moead) archiveCopy() []types.Individual {
+	var arcCopy []types.Individual
+	for _, i := range m.archive {
+		arcCopy = append(arcCopy, i.Copy())
+	}
+	return arcCopy
+}
+
+// Binary Specific Methods
+
+func (m *Moead) evolveBinary(stage types.Stage) {
+	if len(m.archive) == 0 {
+		fmt.Println("No Feasible Individuals - Skipping Binary Search")
+		stage.IsOver()
+	} else {
+		if len(m.BinaryPairs) == 0 {
+			m.BinaryPairs = m.selectRandomPairs()
+			m.ArchiveCopy = m.archiveCopy()
+		}
+		m.boundarySearch()
+		m.generation++
+	}
+}
+
 func (m *Moead) boundarySearch() {
 	missCounter := 0
 	for i, p := range m.population {
@@ -172,38 +204,6 @@ func (m *Moead) boundarySearch() {
 	m.historyCounter = missCounter
 }
 
-func (m Moead) selectRandomPairs() []int {
-	indices := make([]int, len(m.population))
-	for i := range m.population {
-		indices[i] = rand.Intn(len(m.archive))
-	}
-	return indices
-}
-
-func (m Moead) archiveCopy() []types.Individual {
-	var arcCopy []types.Individual
-	for _, i := range m.archive {
-		arcCopy = append(arcCopy, i.Copy())
-	}
-	return arcCopy
-}
-
-// Binary Specific Methods
-
-func (m *Moead) evolveBinary() {
-	if len(m.archive) == 0 {
-		fmt.Println("No Feasible Individuals - Skipping Binary Search")
-		m.binaryCompleted = true
-	} else {
-		if len(m.BinaryPairs) == 0 {
-			m.BinaryPairs = m.selectRandomPairs()
-			m.ArchiveCopy = m.archiveCopy()
-		}
-		m.boundarySearch()
-		m.generation++
-	}
-}
-
 // R2S specific methods
 
 func (m *Moead) determineActiveConstraints(r2s *chm.R2S) {
@@ -226,7 +226,7 @@ func (m *Moead) updateCHM() {
 		m.CHM = r2s
 		return
 	}
-
-	m.CHM.Update(m.generation, float64(m.fnEval))
+	fmt.Println(m.FeasibleRatio())
+	m.CHM.Update(m.generation, m.FeasibleRatio())
 
 }

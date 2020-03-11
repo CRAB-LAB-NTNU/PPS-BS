@@ -28,8 +28,9 @@ type MOEA interface {
 	MaxFuncEvals() int
 	MaxViolation() float64
 	Population() []Individual
+	Generation() int
 	Initialise()
-	InitialiseCHM()
+	//InitialiseCHM()
 	FunctionEvaluations() int
 	FeasibleRatio() float64
 	Reset()

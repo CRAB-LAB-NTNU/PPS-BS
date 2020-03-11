@@ -40,7 +40,14 @@ func (r2s *R2S) Threshold(gen int) float64 {
 	return r2s.DeltaOut[gen]
 }
 
-func (r2s *R2S) Initialise() {
+func (r2s *R2S) Initialise(t int, maxviolation float64) {
+
+	r2s.DeltaIn[0] = maxviolation
+	r2s.DeltaIn[t] = maxviolation
+	r2s.DeltaOut[0] = maxviolation
+	r2s.DeltaOut[t] = maxviolation
+
+	r2s.initializeZ()
 
 }
 
@@ -104,7 +111,6 @@ func (r2s *R2S) initializeDeltaOut(feasibleRatio float64, population []types.Ind
 // Update updates the deltaIn and deltaOut of r2s.
 // Require that cfe is a float to allow the use of interface for constraint handling.
 func (r2s *R2S) Update(t int, cfe float64) {
-
 	if r2s.HasActiveConstraints() {
 		r2s.updateDeltaIn(t, int(cfe))
 		r2s.updateDeltaOut(t, int(cfe))
@@ -123,12 +129,11 @@ func (r2s *R2S) updateDeltaIn(t int, cfe int) {
 
 	r2s.DeltaIn[t] = math.Max(minDeltaIn, calcDeltaIn)
 
-	fmt.Println("DeltaIn[", t, "]=", r2s.DeltaIn[t])
+	//fmt.Println("DeltaIn[", t, "]=", r2s.DeltaIn[t])
 }
 
 // UpdateDeltaOut is used to calculate a new value for deltaOut each generation
 func (r2s *R2S) updateDeltaOut(t int, cfe int) {
-
 	if cfe <= r2s.FESc {
 		p1 := r2s.DeltaOut[0]
 		numerator := float64(cfe)
@@ -141,7 +146,7 @@ func (r2s *R2S) updateDeltaOut(t int, cfe int) {
 	} else {
 		r2s.DeltaOut[t] = 0.0
 	}
-	fmt.Println("DeltaOut[", t, "]=", r2s.DeltaOut[t])
+	//fmt.Println("DeltaOut[", t, "]=", r2s.DeltaOut[t])
 
 }
 
@@ -209,20 +214,8 @@ func (r2s R2S) Violation(t int, fitness types.Fitness) float64 {
 		r := r2s.r(t, fitness.ConstraintValues[c])
 
 		if l >= 0 && l <= r2s.DeltaIn[t] && r >= 0 && r <= r2s.DeltaOut[t] {
-			/*
-				fmt.Println("Inside border")
-				fmt.Println("DeltaIn: ", r2s.DeltaIn[t])
-				fmt.Println("DeltaOut:", r2s.DeltaOut[t])
-				fmt.Println("Constraint Val:", fitness.ConstraintValues[c])
-			*/
 			continue
 		} else {
-			/*
-				fmt.Println("Outside border")
-				fmt.Println("DeltaIn: ", r2s.DeltaIn[t])
-				fmt.Println("DeltaOut:", r2s.DeltaOut[t])
-				fmt.Println("Constraint Val:", fitness.ConstraintValues[c])
-			*/
 			total += math.Min(math.Abs(l), math.Abs(r))
 		}
 

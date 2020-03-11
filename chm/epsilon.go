@@ -25,17 +25,22 @@ func (e Epsilon) Name() string {
 	return "Epsilon"
 }
 
+func (e Epsilon) Initialise(gen int, maxViolation float64) {
+	e.threshold[gen] = maxViolation //Dont really need this, but the interface needs to be implemented
+	e.threshold[0] = maxViolation
+
+}
+
 func (e Epsilon) Threshold(gen int) float64 {
 	return e.threshold[gen]
 }
 
 //Update updates the epsilon value used for the generation (k)
-func (e *Epsilon) Update(t int) {
+func (e *Epsilon) Update(t int, temp float64) {
 	if e.Tc < t {
 		e.threshold[t] = 0
 	} else {
 		p1 := e.threshold[0]
-
 		numerator := float64(t)
 		denominator := float64(e.Tc)
 		p2 := math.Pow((1 - numerator/denominator), e.Cp)

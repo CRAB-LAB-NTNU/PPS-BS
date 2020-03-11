@@ -1,9 +1,14 @@
 package pps
 
 import (
-	"math"
+	"fmt"
+	"log"
+	"os"
+	"strconv"
+	"time"
 
 	"github.com/CRAB-LAB-NTNU/PPS-BS/biooperators"
+	"github.com/CRAB-LAB-NTNU/PPS-BS/plotter"
 	"github.com/CRAB-LAB-NTNU/PPS-BS/stages"
 	"github.com/CRAB-LAB-NTNU/PPS-BS/types"
 )
@@ -15,34 +20,13 @@ func (pps *PPS) setIdealAndNadir(generation int) {
 	pps.nadirPoints[generation] = np
 }
 
-func (pps *PPS) calculateMaxChange(generation int) {
-	if generation >= pps.L {
-		rz := pps.rx(generation, pps.idealPoints)
-		rn := pps.rx(generation, pps.nadirPoints)
-		pps.rk = math.Max(rz, rn)
-	}
-}
-
-func (pps PPS) rx(k int, points [][]float64) float64 {
-	m := math.SmallestNonzeroFloat64
-	for i := 0; i < len(points[k]); i++ {
-		cur := points[k][i]
-		offset := points[k-pps.L][i]
-		dist := math.Abs(cur - offset)
-		if calc := dist / math.Max(math.Abs(offset), pps.Delta); calc > m {
-			m = calc
-		}
-	}
-	return m
-}
-
 func (pps *PPS) changeStage(generation int) bool {
 	if pps.currentStage().Stage() == types.Push {
 		return pps.changePush(generation)
-	} else {
-		return pps.currentStage().IsOver()
 	}
-	return false
+
+	return pps.currentStage().IsOver()
+
 }
 
 func (pps *PPS) changePush(generation int) bool {
@@ -55,10 +39,63 @@ func (pps *PPS) changePush(generation int) bool {
 	return pps.currentStage().IsOver()
 }
 
+func (pps *PPS) initStage() {
+	pps.MOEA.GetCHM().Initialise(pps.MOEA.Generation(), pps.MOEA.MaxViolation())
+}
+
 func (pps PPS) currentStage() types.Stage {
 	return pps.Stages[pps.stage]
 }
 
 func (pps *PPS) nextStage() {
 	pps.stage++
+}
+
+func (pps PPS) plot(generation int) {
+
+	gen := strconv.Itoa(generation)
+	eps := strconv.FormatFloat(pps.MOEA.GetCHM().Threshold(generation), 'E', -1, 64)
+	prob := pps.CMOP.Name() + "." + pps.MOEA.GetCHM().Name()
+	stage := pps.Stage()
+
+	path := "graphics/gif/" + prob
+
+	if err := os.MkdirAll(path, 0755); err != nil {
+		log.Fatal(err)
+	}
+
+	plotter := plotter.Plotter2D{
+		Title:    prob + " Stage: " + stage + " gen: " + gen + " eps: " + eps,
+		LabelX:   "f1",
+		LabelY:   "f2",
+		Min:      pps.Export.VideoMin,
+		Max:      pps.Export.VideoMax,
+		Filename: path + "/" + gen + ".png",
+		Solution: pps.paretoPoints,
+		Extremes: [][]float64{pps.idealPoints[generation], pps.nadirPoints[generation], pps.MOEA.Ideal()},
+	}
+	plotter.Plot(pps.MOEA.Population(), pps.MOEA.Archive())
+}
+
+func (pps PPS) plotMetric() {
+	prob := pps.CMOP.Name() + "." + pps.MOEA.GetCHM().Name()
+	path := "graphics/metric/" + prob
+	if err := os.MkdirAll(path, 0755); err != nil {
+		log.Fatal(err)
+	}
+	plotter := plotter.Plotter2D{
+		Title:    prob + " Metric",
+		LabelX:   "Generation",
+		LabelY:   "IGD",
+		Filename: path + "/" + prob + ".png",
+	}
+	plotter.PlotMetric(pps.MetricData, pps.SwitchPoint)
+}
+
+func (pps *PPS) printData(gen int) {
+	t := time.Now()
+	formatted := fmt.Sprintf("%d-%02d-%02dT%02d:%02d:%02d",
+		t.Year(), t.Month(), t.Day(),
+		t.Hour(), t.Minute(), t.Second())
+	fmt.Println(formatted, ",", gen, ",", pps.Stage(), ",", pps.MOEA.MaxViolation(), ",", pps.MOEA.FeasibleRatio(), ",", pps.MOEA.GetCHM().Threshold(gen), ",", pps.Performance())
 }

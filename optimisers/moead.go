@@ -14,7 +14,7 @@ type Moead struct {
 	CMOP                                            types.CMOP
 	CHM                                             types.CHM
 	T, WeightDistribution, populationSize           int
-	DecisionVariables, Nr, generation, MaxFuncEvals int
+	DecisionVariables, Nr, generation, maxFuncEvals int
 	fnEval, historyCounter                          int
 	F, Cr, DistributionIndex, maxViolation          float64
 	Weights                                         []arrays.Vector
@@ -26,7 +26,7 @@ type Moead struct {
 	binaryCompleted                                       bool
 }
 
-func NewMoead(cmop types.CMOP, chm types.CHM, t, weightDistribution, decisionVariables, nr int, f, cr, distributionIndex float64, MaxFuncEvals int) *Moead {
+func NewMoead(cmop types.CMOP, chm types.CHM, t, weightDistribution, decisionVariables, nr int, f, cr, distributionIndex float64, maxFuncEvals int) *Moead {
 
 	moead := Moead{
 		CMOP:               cmop,
@@ -38,7 +38,7 @@ func NewMoead(cmop types.CMOP, chm types.CHM, t, weightDistribution, decisionVar
 		F:                  f,
 		Cr:                 cr,
 		DistributionIndex:  distributionIndex,
-		MaxFuncEvals:       MaxFuncEvals,
+		maxFuncEvals:       maxFuncEvals,
 	}
 
 	moead.Initialise()
@@ -49,8 +49,8 @@ func (m Moead) Ideal() []float64 {
 	return m.idealPoint
 }
 
-func (m Moead) GetMaxFuncEvals() int {
-	return m.MaxFuncEvals
+func (m Moead) MaxFuncEvals() int {
+	return m.maxFuncEvals
 }
 
 func (m Moead) Archive() []types.Individual {
@@ -61,13 +61,16 @@ func (m Moead) GetCHM() types.CHM {
 	return m.CHM
 }
 
-/*
 func (m Moead) MaxViolation() float64 {
 	return m.maxViolation
-}*/
+}
 
 func (m Moead) Population() []types.Individual {
 	return m.population
+}
+
+func (m Moead) Generation() int {
+	return m.generation
 }
 
 func (m *Moead) Reset() {
@@ -132,19 +135,19 @@ func (m Moead) FeasibleRatio() float64 {
 /*Evolve performs the genetic operator on all individuals in the population
 Based on the stage parameter different evolutionary steps are taken
 */
-func (m *Moead) Evolve(stage types.StageType, threshold float64) {
+func (m *Moead) Evolve(stage types.Stage) {
 
 	//If the stage is binary search we evolve the population only using binary search
-	if stage == types.BinarySearch {
-		m.evolveBinary()
+	if stage.Stage() == types.BinarySearch {
+		m.evolveBinary(stage)
 		return
 	}
 
 	//If the stage is not push we care about constraints
-	if stage != types.Push {
+	if stage.Stage() != types.Push {
 		m.updateCHM()
 	}
-
+	//m.maxViolation = m.cal
 	for i := 0; i < m.populationSize; i++ {
 
 		hood := m.selectHood(0.9, i)
@@ -158,7 +161,7 @@ func (m *Moead) Evolve(stage types.StageType, threshold float64) {
 		m.updateMaxConstraintViolation(offspring)
 
 		//Would have preferred a more modular appraoch without the check
-		if stage == types.Push {
+		if stage.Stage() == types.Push {
 			m.updatePopulation(hood, offspring, m.replaceIgnoringConstraints)
 		} else {
 			m.updatePopulation(hood, offspring, m.replaceWithConstraints)
