@@ -36,6 +36,7 @@ func (pps *PPS) Initialise() {
 	genMax := pps.Moea.MaxEvaluations() / len(pps.Moea.Population())
 
 	pps.improvedEpsilon = make([]float64, genMax)
+	pps.generation = 0
 	pps.idealPoints = arrays.GenerateEmpty2DSliceFloat64(genMax, pps.Cmop.ObjectiveCount)
 	pps.nadirPoints = arrays.GenerateEmpty2DSliceFloat64(genMax, pps.Cmop.ObjectiveCount)
 	pps.rk = 1.0
@@ -96,7 +97,7 @@ func (pps *PPS) Run() float64 {
 		} else {
 			pps.improvedEpsilon[pps.generation] = 0
 		}
-		pps.printData()
+		//pps.printData()
 		// We evolve the population one generation
 		// How this is done will depend on the underlying moea and constraint-handling method
 
@@ -189,7 +190,7 @@ func (pps *PPS) printData() {
 	formatted := fmt.Sprintf("%d-%02d-%02dT%02d:%02d:%02d",
 		t.Year(), t.Month(), t.Day(),
 		t.Hour(), t.Minute(), t.Second())
-	fmt.Println(formatted, ",", gen, ",", pps.Stage(), ",", pps.Moea.MaxViolation(), ",", pps.Moea.FeasibleRatio(), ",", pps.improvedEpsilon[gen] /*, ",", pps.Performance()*/)
+	fmt.Println(formatted, ",", gen, ",", pps.Stage(), ",", pps.Moea.MaxViolation(), ",", pps.Moea.FeasibleRatio(), ",", pps.improvedEpsilon[gen], ",", pps.Performance())
 }
 
 /*

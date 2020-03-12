@@ -40,6 +40,7 @@ func (p PpsPlotter) PlotFrame() {
 	plt.Title.Text = p.title()
 
 	plt.X.Label.Text, plt.Y.Label.Text = "f1", "f2"
+
 	plt.X.Max, plt.Y.Max = p.Config.VideoMax, p.Config.VideoMax
 	plt.X.Min, plt.Y.Min = p.Config.VideoMin, p.Config.VideoMin
 
@@ -118,7 +119,7 @@ func (p PpsPlotter) controlPath(path string) error {
 }
 
 func (p PpsPlotter) individualScatter(pop []types.Individual, color color.RGBA) *plotter.Scatter {
-	x := convertIndividualsToPoints2D(pop, p.Config.VideoMax)
+	x := convertIndividualsToPoints2D(pop, p.Config.VideoMin, p.Config.VideoMax)
 	scatter, _ := plotter.NewScatter(x)
 	scatter.GlyphStyle.Color = color
 	scatter.GlyphStyle.Radius = vg.Points(1)
@@ -126,7 +127,7 @@ func (p PpsPlotter) individualScatter(pop []types.Individual, color color.RGBA) 
 }
 
 func (p PpsPlotter) floatScatter(data [][]float64, color color.RGBA) *plotter.Scatter {
-	points := convertParetoToPoints(data, p.Config.VideoMax)
+	points := convertParetoToPoints(data, p.Config.VideoMin, p.Config.VideoMax)
 	scatter, _ := plotter.NewScatter(points)
 	scatter.GlyphStyle.Color = color
 	scatter.GlyphStyle.Radius = vg.Points(1)

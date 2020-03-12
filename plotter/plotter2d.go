@@ -26,7 +26,7 @@ func (plotter2d *Plotter2D) Plot(pops ...[]types.Individual) {
 	p.Y.Min = plotter2d.Min
 	p.Add(plotter.NewGrid())
 	if plotter2d.Solution != nil {
-		pareto := convertParetoToPoints(plotter2d.Solution, plotter2d.Max)
+		pareto := convertParetoToPoints(plotter2d.Solution, plotter2d.Min, plotter2d.Max)
 		paretoScatter, _ := plotter.NewScatter(pareto)
 		paretoScatter.GlyphStyle.Color = color.RGBA{R: 0, G: 255, B: 0, A: 255}
 		paretoScatter.GlyphStyle.Radius = vg.Points(0.5)
@@ -34,7 +34,7 @@ func (plotter2d *Plotter2D) Plot(pops ...[]types.Individual) {
 		p.Legend.Add("Solution", paretoScatter)
 	}
 	if plotter2d.Extremes != nil {
-		extr := convertParetoToPoints(plotter2d.Extremes, plotter2d.Max)
+		extr := convertParetoToPoints(plotter2d.Extremes, plotter2d.Min, plotter2d.Max)
 		extrScatter, _ := plotter.NewScatter(extr)
 		extrScatter.GlyphStyle.Color = color.RGBA{R: 0, G: 0, B: 255, A: 255}
 		extrScatter.GlyphStyle.Radius = vg.Points(2)
@@ -42,7 +42,7 @@ func (plotter2d *Plotter2D) Plot(pops ...[]types.Individual) {
 		p.Add(extrScatter)
 	}
 	for i, pop := range pops {
-		x := convertIndividualsToPoints2D(pop, plotter2d.Max)
+		x := convertIndividualsToPoints2D(pop, plotter2d.Min, plotter2d.Max)
 		s, _ := plotter.NewScatter(x)
 		s.GlyphStyle.Color = color.RGBA{R: 255 * uint8(i), G: 0, B: 0, A: 255}
 		s.GlyphStyle.Radius = vg.Points(1)

@@ -4,10 +4,9 @@ import (
 	"fmt"
 	"math/rand"
 
+	"github.com/CRAB-LAB-NTNU/PPS-BS/arrays"
 	"github.com/CRAB-LAB-NTNU/PPS-BS/biooperators"
 	"github.com/CRAB-LAB-NTNU/PPS-BS/types"
-
-	"github.com/CRAB-LAB-NTNU/PPS-BS/arrays"
 )
 
 /*Moead is the struct describing the MOEA/D algorithm.

@@ -20,7 +20,7 @@ func g1(x types.Genotype) float64 {
 	return 1 + s
 }
 
-func g2(x types.Genotype) float64 {
+func G2(x types.Genotype) float64 {
 	var s float64
 	n := len(x)
 	floatN := float64(n)
@@ -29,7 +29,6 @@ func g2(x types.Genotype) float64 {
 		floatI := float64(i)
 
 		zExp := math.Pow(x[i]-(floatI/floatN), 2)
-
 		z := 1 - math.Exp(-10*zExp)
 
 		a := (0.1 / floatN) * math.Pow(z, 2)

@@ -17,10 +17,10 @@ func convertFloatToPoints(data []float64, switchPoint int) plotter.XYs {
 	return points
 }
 
-func convertParetoToPoints(pareto [][]float64, max float64) plotter.XYs {
+func convertParetoToPoints(pareto [][]float64, min, max float64) plotter.XYs {
 	var points plotter.XYs
 	for _, set := range pareto {
-		if set[0] > max || set[1] > max {
+		if set[0] > max || set[1] > max || set[0] < min || set[1] < min {
 			continue
 		}
 		point := plotter.XY{
@@ -32,11 +32,11 @@ func convertParetoToPoints(pareto [][]float64, max float64) plotter.XYs {
 	return points
 }
 
-func convertIndividualsToPoints2D(individuals []types.Individual, max float64) plotter.XYs {
+func convertIndividualsToPoints2D(individuals []types.Individual, min, max float64) plotter.XYs {
 	var points plotter.XYs
 	for _, ind := range individuals {
 		objectiveValues := ind.Fitness().ObjectiveValues
-		if objectiveValues[0] > max || objectiveValues[1] > max {
+		if objectiveValues[0] > max || objectiveValues[1] > max || objectiveValues[0] < min || objectiveValues[1] < min {
 			continue
 		}
 		point := plotter.XY{
