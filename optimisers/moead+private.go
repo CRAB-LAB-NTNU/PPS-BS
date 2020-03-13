@@ -8,6 +8,7 @@ import (
 	"github.com/CRAB-LAB-NTNU/PPS-BS/arrays"
 	"github.com/CRAB-LAB-NTNU/PPS-BS/biooperators"
 	"github.com/CRAB-LAB-NTNU/PPS-BS/chm"
+	"github.com/CRAB-LAB-NTNU/PPS-BS/stages"
 	"github.com/CRAB-LAB-NTNU/PPS-BS/types"
 )
 
@@ -32,7 +33,7 @@ func (m *Moead) crossover(p, x, y types.Individual) types.Individual {
 
 	child.PolynomialMutation(m.DistributionIndex)
 	child.Repair()
-	child.UpdateFitness(m.CMOP)
+	child.UpdateFitness(m.cmop)
 	return &child
 }
 
@@ -79,8 +80,8 @@ func (m *Moead) replaceIgnoringConstraints(p int, o types.Individual) bool {
 func (m *Moead) replaceWithConstraints(p int, o types.Individual) bool {
 	pF := m.population[p].Fitness()
 	oF := o.Fitness()
-	pCV := m.CHM.Violation(m.generation, pF)
-	oCV := m.CHM.Violation(m.generation, oF)
+	pCV := m.chm.Violation(m.generation, pF)
+	oCV := m.chm.Violation(m.generation, oF)
 	pS := tchebycheff(pF.ObjectiveValues, m.idealPoint, m.Weights[p])
 	oS := tchebycheff(oF.ObjectiveValues, m.idealPoint, m.Weights[p])
 
@@ -133,7 +134,7 @@ func (m Moead) selectRandomPairs() []int {
 	return indices
 }
 
-func (m Moead) archiveCopy() []types.Individual {
+func (m Moead) copyArchive() []types.Individual {
 	var arcCopy []types.Individual
 	for _, i := range m.archive {
 		arcCopy = append(arcCopy, i.Copy())
@@ -144,34 +145,46 @@ func (m Moead) archiveCopy() []types.Individual {
 // Binary Specific Methods
 
 func (m *Moead) evolveBinary(stage types.Stage) {
-	if len(m.archive) == 0 {
-		fmt.Println("No Feasible Individuals - Skipping Binary Search")
-		stage.IsOver()
+	binary, ok := stage.(*stages.Binary)
+	if !ok {
+		panic("Could not assert binary stage")
+	}
+	if m.skipBinary() {
+		fmt.Println("No feasible individuals in the archive - Skipping binary search")
+		stage.SetOver()
 	} else {
-		if len(m.BinaryPairs) == 0 {
-			m.BinaryPairs = m.selectRandomPairs()
-			m.ArchiveCopy = m.archiveCopy()
+		if !m.hasBinaryPairs() {
+			m.binaryPairs = m.selectRandomPairs()
+			m.archiveCopy = m.copyArchive()
 		}
-		m.boundarySearch()
+		m.boundarySearch(binary)
 		m.generation++
 	}
 }
 
-func (m *Moead) boundarySearch() {
+func (m Moead) skipBinary() bool {
+	return len(m.archive) == 0
+}
+
+func (m Moead) hasBinaryPairs() bool {
+	return len(m.binaryPairs) > 0
+}
+
+func (m *Moead) boundarySearch(binary *stages.Binary) {
 	missCounter := 0
 	for i, p := range m.population {
 		m.fnEval++
-		j := m.BinaryPairs[i]
+		j := m.binaryPairs[i]
 		if j == -1 {
 			missCounter++
 			continue
 		}
-		pair := m.ArchiveCopy[j]
+		pair := m.archiveCopy[j]
 
 		dist := arrays.EuclideanDistance(pair.Fitness().ObjectiveValues, p.Fitness().ObjectiveValues)
 
-		if dist <= m.BinaryMinDistance {
-			m.BinaryPairs[j] = -1
+		if dist <= binary.MinDistance() {
+			m.binaryPairs[j] = -1
 			missCounter++
 			continue
 		}
@@ -180,19 +193,18 @@ func (m *Moead) boundarySearch() {
 		ind := MoeadIndividual{D: len(p.Genotype())}
 		ind.SetGenotype(middlePoint)
 		ind.Repair()
-		ind.UpdateFitness(m.CMOP)
+		ind.UpdateFitness(m.cmop)
 
 		if feasible(ind.Fitness()) {
-			m.ArchiveCopy[j] = &ind
+			m.archiveCopy[j] = &ind
 		} else {
 			m.population[i] = &ind
 		}
 	}
-
 	if missCounter <= m.historyCounter && missCounter > 0 {
-		m.population = selectBinaryResult(m.ArchiveCopy, m.population, m.populationSize, m.BinaryFeasibleSelectionProbability)
-		m.binaryCompleted = true
-
+		m.population = selectBinaryResult(m.archiveCopy, m.population, m.populationSize, binary.Fcp())
+		fmt.Println("Setting binary stage over")
+		binary.SetOver()
 		m.maxViolation = -1
 		for _, p := range m.population {
 			cv := constraintViolation(p.Fitness())
@@ -204,6 +216,22 @@ func (m *Moead) boundarySearch() {
 	m.historyCounter = missCounter
 }
 
+// CHM
+func (m *Moead) updateCHM() {
+
+	// We try to cast to r2s to see if that is the constraint handling method used.
+	// This is because we have to check for active constraints
+	r2s, ok := m.chm.(*chm.R2S)
+	if ok {
+		m.determineActiveConstraints(r2s)
+		r2s.Update(m.generation, float64(m.fnEval))
+		m.chm = r2s
+		return
+	}
+	m.chm.Update(m.generation, m.FeasibleRatio())
+
+}
+
 // R2S specific methods
 
 func (m *Moead) determineActiveConstraints(r2s *chm.R2S) {
@@ -213,20 +241,4 @@ func (m *Moead) determineActiveConstraints(r2s *chm.R2S) {
 	randomBest := rankedPopulation[0][randomIndex]
 
 	r2s.ACD(m.generation, m.fnEval, randomBest.Fitness())
-}
-
-func (m *Moead) updateCHM() {
-
-	// We try to cast to r2s to see if that is the constraint handling method used.
-	// This is because we have to check for active constraints
-	r2s, ok := m.CHM.(*chm.R2S)
-	if ok {
-		m.determineActiveConstraints(r2s)
-		r2s.Update(m.generation, float64(m.fnEval))
-		m.CHM = r2s
-		return
-	}
-	fmt.Println(m.FeasibleRatio())
-	m.CHM.Update(m.generation, m.FeasibleRatio())
-
 }
