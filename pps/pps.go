@@ -46,25 +46,26 @@ func (pps *PPS) Initialise() {
 }
 
 func (pps *PPS) Run() float64 {
-	for generation := 0; pps.MOEA.FunctionEvaluations() < pps.MOEA.MaxFuncEvals(); generation++ {
+	gen := 0
+	for pps.MOEA.FunctionEvaluations() < pps.MOEA.MaxFuncEvals() {
 
-		pps.setIdealAndNadir(generation)
+		pps.setIdealAndNadir(gen)
 
-		if pps.changeStage(generation) {
+		if pps.changeStage(gen) {
 			pps.nextStage()
 			pps.initStage()
 		}
-
-		pps.printData(generation)
-
+		//pps.printData(pps.MOEA.Generation())
 		pps.MOEA.Evolve(pps.currentStage())
+		pps.printData(gen)
 
 		if pps.Export.ExportVideo {
-			pps.plot(generation)
+			pps.plot(gen)
 		}
 		if pps.Export.PlotEval {
 			pps.MetricData = append(pps.MetricData, pps.Performance())
 		}
+		gen++
 	}
 	if pps.Export.ExportVideo {
 		pps.ExportVideo()
@@ -84,7 +85,7 @@ func (pps PPS) RunTest() {
 	}
 	fmt.Println("PROBLEM:", pps.CMOP.Name())
 	fmt.Println("Stages:", pps.Stages)
-	fmt.Println("Constraint method:", pps.MOEA.GetCHM().Name())
+	fmt.Println("Constraint method:", pps.MOEA.CHM().Name())
 	fmt.Println("MEAN:", pps.Result.Mean())
 	fmt.Println("VAR:", pps.Result.Variance())
 	fmt.Println("STD:", pps.Result.StandardDeviation())
@@ -96,7 +97,7 @@ func (pps PPS) Stage() string {
 }
 
 func (pps PPS) ExportVideo() {
-	prob := pps.CMOP.Name() + "." + pps.MOEA.GetCHM().Name()
+	prob := pps.CMOP.Name() + "." + pps.MOEA.CHM().Name()
 	path := "graphics/vids/"
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		fmt.Println("path eksisterer ikke, produserer.")
