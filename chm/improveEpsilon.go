@@ -31,19 +31,21 @@ func (ie *ImprovedEpsilon) Threshold(gen int) float64 {
 	return ie.threshold[gen]
 }
 func (ie *ImprovedEpsilon) Initialise(generation int, maxViolation float64) {
-	ie.threshold[generation], ie.threshold[0] = maxViolation, maxViolation
+	ie.threshold[generation], ie.threshold[generation-1], ie.threshold[0] = maxViolation, maxViolation, maxViolation
 }
 
 //Update updates the epsilon value used for the generation (t) based on the feasibility ratio (rfk) of the current generation
 func (ie *ImprovedEpsilon) Update(t int, rfk float64) {
-	// If we have passed a certain number of generations we stop updating epsilon and set it to zero.
 	if ie.tc < t {
+
 		ie.threshold[t] = 0
 	} else if rfk < ie.alpha {
+
 		p1 := (1 - ie.tau)
 		p2 := ie.threshold[t-1]
 
 		ie.threshold[t] = p1 * p2
+
 	} else {
 		p1 := ie.threshold[0]
 
