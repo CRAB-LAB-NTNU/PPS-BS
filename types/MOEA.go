@@ -36,9 +36,6 @@ type MOEA interface {
 	Ideal() []float64
 	Archive() []Individual
 	Evolve(Stage)
-	ResetBinary()
-	IsBinarySearch() bool
-	BinaryDone() bool
 	CHM() CHM
 }
 
