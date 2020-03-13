@@ -24,7 +24,6 @@ func (pps *PPS) changeStage(generation int) bool {
 	if pps.currentStage().Type() == types.Push {
 		return pps.changePush(generation)
 	}
-
 	return pps.currentStage().IsOver()
 
 }
@@ -40,7 +39,14 @@ func (pps *PPS) changePush(generation int) bool {
 }
 
 func (pps *PPS) initStage() {
-	pps.MOEA.GetCHM().Initialise(pps.MOEA.Generation(), pps.MOEA.MaxViolation())
+	if pps.currentStage().Type() == types.Pull {
+		pps.initPull()
+	}
+	//pps.MOEA.CHM().Initialise(pps.MOEA.Generation(), pps.MOEA.MaxViolation())
+}
+
+func (pps *PPS) initPull() {
+	pps.MOEA.CHM().Initialise(pps.MOEA.Generation(), pps.MOEA.MaxViolation())
 }
 
 func (pps PPS) currentStage() types.Stage {
@@ -49,14 +55,18 @@ func (pps PPS) currentStage() types.Stage {
 
 func (pps *PPS) nextStage() {
 	pps.stage++
+	//If there are no feasible solutions we simply skip the boundary stage
+	if pps.currentStage().Type() == types.BinarySearch && len(pps.MOEA.Archive()) == 0 {
+		pps.stage++
+	}
 }
 
 func (pps PPS) plot(generation int) {
 
 	gen := strconv.Itoa(generation)
-	eps := strconv.FormatFloat(pps.MOEA.GetCHM().Threshold(generation), 'E', -1, 64)
-	prob := pps.CMOP.Name() + "." + pps.MOEA.GetCHM().Name()
-	stage := pps.Stage()
+	eps := strconv.FormatFloat(pps.MOEA.CHM().Threshold(generation), 'E', -1, 64)
+	prob := pps.CMOP.Name() + "." + pps.MOEA.CHM().Name()
+	stage := pps.currentStage().Name()
 
 	path := "graphics/gif/" + prob
 
@@ -78,7 +88,7 @@ func (pps PPS) plot(generation int) {
 }
 
 func (pps PPS) plotMetric() {
-	prob := pps.CMOP.Name() + "." + pps.MOEA.GetCHM().Name()
+	prob := pps.CMOP.Name() + "." + pps.MOEA.CHM().Name()
 	path := "graphics/metric/" + prob
 	if err := os.MkdirAll(path, 0755); err != nil {
 		log.Fatal(err)
@@ -97,5 +107,5 @@ func (pps *PPS) printData(gen int) {
 	formatted := fmt.Sprintf("%d-%02d-%02dT%02d:%02d:%02d",
 		t.Year(), t.Month(), t.Day(),
 		t.Hour(), t.Minute(), t.Second())
-	fmt.Println(formatted, ",", gen, ",", pps.Stage(), ",", pps.MOEA.MaxViolation(), ",", pps.MOEA.FeasibleRatio(), ",", pps.MOEA.GetCHM().Threshold(gen), ",", pps.Performance())
+	fmt.Println(formatted, ",", gen, ",", pps.Stage(), ",", pps.MOEA.MaxViolation(), ",", pps.MOEA.FeasibleRatio(), ",", pps.MOEA.CHM().Threshold(gen), ",", pps.Performance())
 }
