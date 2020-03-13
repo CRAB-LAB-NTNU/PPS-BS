@@ -8,6 +8,8 @@ type Push struct {
 }
 
 type Binary struct {
+	MinDistance float64
+	Fcp         float64
 }
 type Pull struct {
 	CHM types.CHMMethod
