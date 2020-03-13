@@ -14,21 +14,21 @@ type Push struct {
 	rk, delta, epsilon float64
 	l                  int
 	isOver             bool
-	stage              types.StageType
+	stageType          types.StageType
 	ip, np             [][]float64
 }
 
 func NewPush(delta, epsilon float64, l int, generations int, objectiveValues int) *Push {
 	return &Push{
-		name:    "Push",
-		rk:      1,
-		delta:   delta,
-		epsilon: epsilon,
-		l:       l,
-		isOver:  false,
-		stage:   types.Push,
-		ip:      arrays.Zeros2DFloat64(generations, objectiveValues),
-		np:      arrays.Zeros2DFloat64(generations, objectiveValues),
+		name:      "Push",
+		rk:        1,
+		delta:     delta,
+		epsilon:   epsilon,
+		l:         l,
+		isOver:    false,
+		stageType: types.Push,
+		ip:        arrays.Zeros2DFloat64(generations, objectiveValues),
+		np:        arrays.Zeros2DFloat64(generations, objectiveValues),
 	}
 }
 
@@ -36,8 +36,8 @@ func (p Push) Name() string {
 	return p.name
 }
 
-func (p Push) Stage() types.StageType {
-	return p.stage
+func (p Push) Type() types.StageType {
+	return p.stageType
 }
 func (p *Push) SetOver() {
 	p.isOver = true

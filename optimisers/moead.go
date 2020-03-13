@@ -138,13 +138,13 @@ Based on the stage parameter different evolutionary steps are taken
 func (m *Moead) Evolve(stage types.Stage) {
 
 	//If the stage is binary search we evolve the population only using binary search
-	if stage.Stage() == types.BinarySearch {
+	if stage.Type() == types.BinarySearch {
 		m.evolveBinary(stage)
 		return
 	}
 
 	//If the stage is not push we care about constraints
-	if stage.Stage() != types.Push {
+	if stage.Type() != types.Push {
 		m.updateCHM()
 	}
 	//m.maxViolation = m.cal
@@ -161,7 +161,7 @@ func (m *Moead) Evolve(stage types.Stage) {
 		m.updateMaxConstraintViolation(offspring)
 
 		//Would have preferred a more modular appraoch without the check
-		if stage.Stage() == types.Push {
+		if stage.Type() == types.Push {
 			m.updatePopulation(hood, offspring, m.replaceIgnoringConstraints)
 		} else {
 			m.updatePopulation(hood, offspring, m.replaceWithConstraints)
