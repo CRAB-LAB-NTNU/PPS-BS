@@ -57,7 +57,7 @@ func (pps *PPS) Run() float64 {
 
 		pps.printData(generation)
 
-		pps.MOEA.Evolve(pps.currentStage().Stage())
+		pps.MOEA.Evolve(pps.currentStage())
 
 		if pps.Export.ExportVideo {
 			pps.plot(generation)

@@ -21,7 +21,7 @@ func (pps *PPS) setIdealAndNadir(generation int) {
 }
 
 func (pps *PPS) changeStage(generation int) bool {
-	if pps.currentStage().Stage() == types.Push {
+	if pps.currentStage().Type() == types.Push {
 		return pps.changePush(generation)
 	}
 

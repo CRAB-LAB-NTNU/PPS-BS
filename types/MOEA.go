@@ -30,13 +30,12 @@ type MOEA interface {
 	Population() []Individual
 	Generation() int
 	Initialise()
-	//InitialiseCHM()
 	FunctionEvaluations() int
 	FeasibleRatio() float64
 	Reset()
 	Ideal() []float64
 	Archive() []Individual
-	Evolve(StageType)
+	Evolve(Stage)
 	ResetBinary()
 	IsBinarySearch() bool
 	BinaryDone() bool
