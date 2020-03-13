@@ -39,7 +39,7 @@ type MOEA interface {
 	ResetBinary()
 	IsBinarySearch() bool
 	BinaryDone() bool
-	GetCHM() CHM
+	CHM() CHM
 }
 
 // Individual is an interface describing an individual in a population
