@@ -15,29 +15,37 @@ import (
 
 // PPS is a struct describing the contents of the Push & Pull Framework
 type PPS struct {
-	CMOP                                   types.CMOP
-	MOEA                                   types.MOEA
-	Stages                                 []types.Stage
+	cmop                                   types.CMOP
+	moea                                   types.MOEA
+	stages                                 []types.Stage
 	stage                                  int
 	idealPoints, nadirPoints, paretoPoints [][]float64
 	SwitchPoint                            int
 	MetricData                             []float64
-	Export                                 configs.Export
+	export                                 configs.Export
 	Result                                 types.Results
 }
 
-func (pps *PPS) Reset() {
-	pps.MOEA.Reset()
+func NewPPS(cmop types.CMOP, moea types.MOEA, stages []types.Stage, export configs.Export) *PPS {
+	pps := &PPS{
+		cmop:   cmop,
+		moea:   moea,
+		stages: stages,
+		export: export,
+	}
+
 	pps.Initialise()
+	return pps
+
 }
 
 // Initialise initialises the PPS framework with a given CMOP, MOEA and CHM
 func (pps *PPS) Initialise() {
 
-	pps.idealPoints = arrays.Zeros2DFloat64(pps.MOEA.MaxFuncEvals(), pps.CMOP.NumberOfObjectives())
-	pps.nadirPoints = arrays.Zeros2DFloat64(pps.MOEA.MaxFuncEvals(), pps.CMOP.NumberOfObjectives())
+	pps.idealPoints = arrays.Zeros2DFloat64(pps.moea.MaxFuncEvals(), pps.cmop.NumberOfObjectives())
+	pps.nadirPoints = arrays.Zeros2DFloat64(pps.moea.MaxFuncEvals(), pps.cmop.NumberOfObjectives())
 	pps.stage = 0
-	if points, err := plotter.ParseDatFile("arraydata/pf_data/" + pps.CMOP.Name() + ".dat"); err == nil {
+	if points, err := plotter.ParseDatFile("arraydata/pf_data/" + pps.cmop.Name() + ".dat"); err == nil {
 		pps.paretoPoints = points
 	} else {
 		fmt.Println("ERROR", err)
@@ -47,7 +55,7 @@ func (pps *PPS) Initialise() {
 
 func (pps *PPS) Run() float64 {
 	gen := 0
-	for pps.MOEA.FunctionEvaluations() < pps.MOEA.MaxFuncEvals() {
+	for pps.moea.FunctionEvaluations() < pps.moea.MaxFuncEvals() {
 
 		pps.setIdealAndNadir(gen)
 
@@ -55,22 +63,21 @@ func (pps *PPS) Run() float64 {
 			pps.nextStage()
 			pps.initStage()
 		}
-		//pps.printData(pps.MOEA.Generation())
-		pps.MOEA.Evolve(pps.currentStage())
+		pps.moea.Evolve(pps.currentStage())
 		pps.printData(gen)
 
-		if pps.Export.ExportVideo {
+		if pps.export.ExportVideo {
 			pps.plot(gen)
 		}
-		if pps.Export.PlotEval {
+		if pps.export.PlotEval {
 			pps.MetricData = append(pps.MetricData, pps.Performance())
 		}
 		gen++
 	}
-	if pps.Export.ExportVideo {
+	if pps.export.ExportVideo {
 		pps.ExportVideo()
 	}
-	if pps.Export.PlotEval {
+	if pps.export.PlotEval {
 		pps.plotMetric()
 	}
 
@@ -78,14 +85,13 @@ func (pps *PPS) Run() float64 {
 }
 
 func (pps PPS) RunTest() {
-	for i := 0; i < pps.Export.Runs; i++ {
-		fmt.Println(pps.CMOP.Name(), "RUN:", i+1)
+	for i := 0; i < pps.export.Runs; i++ {
+		fmt.Println(pps.cmop.Name(), "RUN:", i+1)
 		pps.Result.Add(pps.Run())
-		pps.Reset()
 	}
-	fmt.Println("PROBLEM:", pps.CMOP.Name())
-	fmt.Println("Stages:", pps.Stages)
-	fmt.Println("Constraint method:", pps.MOEA.CHM().Name())
+	fmt.Println("PROBLEM:", pps.cmop.Name())
+	fmt.Println("Stages:", pps.stages)
+	fmt.Println("Constraint method:", pps.moea.CHM().Name())
 	fmt.Println("MEAN:", pps.Result.Mean())
 	fmt.Println("VAR:", pps.Result.Variance())
 	fmt.Println("STD:", pps.Result.StandardDeviation())
@@ -97,7 +103,7 @@ func (pps PPS) Stage() string {
 }
 
 func (pps PPS) ExportVideo() {
-	prob := pps.CMOP.Name() + "." + pps.MOEA.CHM().Name()
+	prob := pps.cmop.Name() + "." + pps.moea.CHM().Name()
 	path := "graphics/vids/"
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		fmt.Println("path eksisterer ikke, produserer.")
@@ -118,5 +124,5 @@ func (pps PPS) ExportVideo() {
 }
 
 func (pps PPS) Performance() float64 {
-	return pps.Export.Metric(pps.MOEA.Archive(), pps.paretoPoints)
+	return pps.export.Metric(pps.moea.Archive(), pps.paretoPoints)
 }
