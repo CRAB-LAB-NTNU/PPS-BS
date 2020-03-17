@@ -26,8 +26,8 @@ type PPS struct {
 	Result                                 types.Results
 }
 
-func NewPPS(cmop types.CMOP, moea types.MOEA, stages []types.Stage, export configs.Export) *PPS {
-	pps := &PPS{
+func NewPPS(cmop types.CMOP, moea types.MOEA, stages []types.Stage, export configs.Export) PPS {
+	pps := PPS{
 		cmop:   cmop,
 		moea:   moea,
 		stages: stages,
@@ -53,6 +53,7 @@ func (pps *PPS) Initialise() {
 
 }
 
+// Run performs a run of the PPS framework
 func (pps *PPS) Run() float64 {
 	gen := 0
 	for pps.moea.FunctionEvaluations() < pps.moea.MaxFuncEvals() {
@@ -84,18 +85,19 @@ func (pps *PPS) Run() float64 {
 	return pps.Performance()
 }
 
-func (pps PPS) RunTest() {
-	for i := 0; i < pps.export.Runs; i++ {
-		fmt.Println(pps.cmop.Name(), "RUN:", i+1)
-		pps.Result.Add(pps.Run())
+func (pps *PPS) CMOP() types.CMOP {
+	return pps.cmop
+}
+func (pps *PPS) Stages() []string {
+	var stages []string
+	for _, stage := range pps.stages {
+		stages = append(stages, stage.Name())
 	}
-	fmt.Println("PROBLEM:", pps.cmop.Name())
-	fmt.Println("Stages:", pps.stages)
-	fmt.Println("Constraint method:", pps.moea.CHM().Name())
-	fmt.Println("MEAN:", pps.Result.Mean())
-	fmt.Println("VAR:", pps.Result.Variance())
-	fmt.Println("STD:", pps.Result.StandardDeviation())
-	fmt.Println()
+	return stages
+}
+
+func (pps *PPS) MOEA() types.MOEA {
+	return pps.moea
 }
 
 func (pps PPS) Stage() string {
