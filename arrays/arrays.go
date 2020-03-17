@@ -172,3 +172,12 @@ func Middle(a, b []float64) []float64 {
 	}
 	return middle
 }
+
+// Zeros2DFloat64 creates a new 2D array with dimension defined by outerlength and innerlength. All values are set to 0
+func Zeros2DFloat64(outerLength, innerLength int) [][]float64 {
+	arr := make([][]float64, outerLength)
+	for i := range arr {
+		arr[i] = make([]float64, innerLength)
+	}
+	return arr
+}

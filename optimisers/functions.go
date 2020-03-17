@@ -2,6 +2,7 @@ package optimisers
 
 import (
 	"math"
+	"math/rand"
 	"sort"
 
 	"github.com/CRAB-LAB-NTNU/PPS-BS/arrays"
@@ -55,6 +56,23 @@ func ndSelect(archive, population []types.Individual, n int) []types.Individual 
 	return result
 }
 
+func selectBinaryResult(archive, population []types.Individual, n int, p float64) []types.Individual {
+	var result []types.Individual
+	var feasibleCount int
+	k := float64(len(population)) / float64(len(archive)) * p
+	for _, ind := range archive {
+		if feasible(ind.Fitness()) && rand.Float64() < k {
+			result = append(result, ind)
+			feasibleCount++
+		}
+	}
+	rest := n - len(result)
+	for i := 0; i < rest; i++ {
+		result = append(result, population[i])
+	}
+	return result
+}
+
 func constraintViolation(fitness types.Fitness) float64 {
 	var s float64
 	for _, cValue := range fitness.ConstraintValues {
@@ -76,9 +94,7 @@ func tchebycheff(objectiveValues, idealPoint []float64, weight arrays.Vector) fl
 		// PPS on the other hand uses 1/w * (f-z)
 		// Using the formula from PPS.
 		v := math.Abs(objectiveValues[i]-idealPoint[i]) / weight.Get(i)
-		if max < v {
-			max = v
-		}
+		max = math.Max(v, max)
 	}
 	return max
 }

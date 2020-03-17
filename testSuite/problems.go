@@ -1,10 +1,101 @@
 package testSuite
 
 import (
+	"fmt"
 	"math"
 
 	"github.com/CRAB-LAB-NTNU/PPS-BS/types"
 )
+
+type LIRCMOP struct {
+	numberOfObjectives, numberOfConstraints int
+	name                                    string
+	CalcFunc                                func(types.Genotype) types.Fitness
+}
+
+func NewLIRCMOP(p int) LIRCMOP {
+	lircmop := LIRCMOP{
+		name: fmt.Sprintf("%s%d", "LIRCMOP", p),
+	}
+
+	switch p {
+	case 1:
+		lircmop.numberOfObjectives = 2
+		lircmop.numberOfConstraints = 2
+		lircmop.CalcFunc = CMOP1
+	case 2:
+		lircmop.numberOfObjectives = 2
+		lircmop.numberOfConstraints = 2
+		lircmop.CalcFunc = CMOP2
+	case 3:
+		lircmop.numberOfObjectives = 2
+		lircmop.numberOfConstraints = 3
+		lircmop.CalcFunc = CMOP3
+	case 4:
+		lircmop.numberOfObjectives = 2
+		lircmop.numberOfConstraints = 3
+		lircmop.CalcFunc = CMOP4
+
+	case 5:
+		lircmop.numberOfObjectives = 2
+		lircmop.numberOfConstraints = 2
+		lircmop.CalcFunc = CMOP5
+	case 6:
+		lircmop.numberOfObjectives = 2
+		lircmop.numberOfConstraints = 2
+		lircmop.CalcFunc = CMOP6
+	case 7:
+		lircmop.numberOfObjectives = 2
+		lircmop.numberOfConstraints = 3
+		lircmop.CalcFunc = CMOP7
+	case 8:
+		lircmop.numberOfObjectives = 2
+		lircmop.numberOfConstraints = 3
+		lircmop.CalcFunc = CMOP8
+	case 9:
+		lircmop.numberOfObjectives = 2
+		lircmop.numberOfConstraints = 2
+		lircmop.CalcFunc = CMOP9
+	case 10:
+		lircmop.numberOfObjectives = 2
+		lircmop.numberOfConstraints = 2
+		lircmop.CalcFunc = CMOP10
+	case 11:
+		lircmop.numberOfObjectives = 2
+		lircmop.numberOfConstraints = 2
+		lircmop.CalcFunc = CMOP11
+	case 12:
+		lircmop.numberOfObjectives = 2
+		lircmop.numberOfConstraints = 2
+		lircmop.CalcFunc = CMOP12
+	case 13:
+		lircmop.numberOfObjectives = 3
+		lircmop.numberOfConstraints = 2
+		lircmop.CalcFunc = CMOP13
+	case 14:
+		lircmop.numberOfObjectives = 3
+		lircmop.numberOfConstraints = 3
+		lircmop.CalcFunc = CMOP14
+
+	}
+	return lircmop
+}
+
+func (lircmop LIRCMOP) Calculate(x types.Genotype) types.Fitness {
+	return lircmop.CalcFunc(x)
+}
+
+func (lircmop LIRCMOP) Name() string {
+	return lircmop.name
+}
+
+func (lircmop LIRCMOP) NumberOfConstraints() int {
+	return lircmop.numberOfConstraints
+}
+
+func (lircmop LIRCMOP) NumberOfObjectives() int {
+	return lircmop.numberOfObjectives
+}
 
 func CMOP1(x types.Genotype) types.Fitness {
 	return types.Fitness{
@@ -47,6 +138,7 @@ func CMOP2(x types.Genotype) types.Fitness {
 func CMOP3(x types.Genotype) types.Fitness {
 	fitness := CMOP1(x)
 	fitness.ConstraintCount = 3
+	fitness.ConstraintTypes = append(fitness.ConstraintTypes, types.EqualsOrGreaterThanZero)
 	fitness.ConstraintValues = append(fitness.ConstraintValues, constraint2(x))
 	return fitness
 }
@@ -54,6 +146,7 @@ func CMOP3(x types.Genotype) types.Fitness {
 func CMOP4(x types.Genotype) types.Fitness {
 	fitness := CMOP2(x)
 	fitness.ConstraintCount = 3
+	fitness.ConstraintTypes = append(fitness.ConstraintTypes, types.EqualsOrGreaterThanZero)
 	fitness.ConstraintValues = append(fitness.ConstraintValues, constraint2(x))
 	return fitness
 }
@@ -236,5 +329,41 @@ func CMOP14(x types.Genotype) types.Fitness {
 		constraint5(x, g, 3.61, 3.24),
 		constraint5(x, g, 3.0625, 2.56),
 	}
+	return fitness
+}
+
+func RobotGripper(x types.Genotype) types.Fitness {
+	fitness := types.Fitness{
+		ObjectiveCount: 2, ConstraintCount: 7,
+		ConstraintTypes: []types.ConstraintType{
+			types.EqualsOrGreaterThanZero,
+			types.EqualsOrGreaterThanZero,
+			types.EqualsOrGreaterThanZero,
+			types.EqualsOrGreaterThanZero,
+			types.EqualsOrGreaterThanZero,
+			types.EqualsOrGreaterThanZero,
+			types.EqualsOrGreaterThanZero,
+		},
+	}
+	converted := convertGenotype(x)
+	fuzzyTest(converted)
+	fmt.Println(converted)
+	yMin, yG, yMax, zMax, P := 50.0, 150.0, 100.0, 100.0, 100.0
+
+	fitness.ObjectiveValues = []float64{
+		robotObjective1(converted, zMax, P),
+		robotObjective2(converted),
+	}
+
+	fitness.ConstraintValues = []float64{
+		robotConstraint1(converted, yMin, zMax),
+		robotConstraint2(converted, zMax),
+		robotConstraint3(converted, yMax),
+		robotConstraint4(converted, yG),
+		robotConstraint5(converted),
+		robotConstraint6(converted, zMax),
+		robotConstraint7(converted, zMax),
+	}
+
 	return fitness
 }
