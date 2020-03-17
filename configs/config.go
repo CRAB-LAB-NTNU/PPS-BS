@@ -17,6 +17,8 @@ type Config struct {
 	Binary Binary
 	Pull   Pull
 
+	//CMOP
+	CMOP CMOP
 	//CHM
 	CHM types.CHMMethod
 	IE  ImprovedEpsilon
