@@ -13,9 +13,12 @@ type LIRCMOP struct {
 	CalcFunc                                func(types.Genotype) types.Fitness
 }
 
-func (lircmop *LIRCMOP) Initialize(problem int) {
-	lircmop.name = fmt.Sprintf("%s%d", "LIRCMOP", problem)
-	switch problem {
+func NewLIRCMOP(p int) LIRCMOP {
+	lircmop := LIRCMOP{
+		name: fmt.Sprintf("%s%d", "LIRCMOP", p),
+	}
+
+	switch p {
 	case 1:
 		lircmop.numberOfObjectives = 2
 		lircmop.numberOfConstraints = 2
@@ -75,6 +78,7 @@ func (lircmop *LIRCMOP) Initialize(problem int) {
 		lircmop.CalcFunc = CMOP14
 
 	}
+	return lircmop
 }
 
 func (lircmop LIRCMOP) Calculate(x types.Genotype) types.Fitness {
