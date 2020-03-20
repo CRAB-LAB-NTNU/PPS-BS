@@ -12,7 +12,7 @@ import (
 of an evolutionary algorithm.
 */
 type MoeadIndividual struct {
-	Cmop     types.CMOP
+	Cmop     types.Cmop
 	genotype types.Genotype
 	fitness  types.Fitness
 }

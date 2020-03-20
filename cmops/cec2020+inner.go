@@ -1,4 +1,4 @@
-package cmop
+package cmops
 
 import (
 	"math"
@@ -6,7 +6,7 @@ import (
 	"github.com/CRAB-LAB-NTNU/PPS-BS/types"
 )
 
-func g1(x types.Genotype) float64 {
+func cecinner1(x types.Genotype) float64 {
 	var s float64
 	n := len(x)
 	floatN := float64(n)
@@ -20,7 +20,7 @@ func g1(x types.Genotype) float64 {
 	return 1 + s
 }
 
-func G2(x types.Genotype) float64 {
+func cecinner2(x types.Genotype) float64 {
 	var s float64
 	n := len(x)
 	floatN := float64(n)
@@ -38,7 +38,7 @@ func G2(x types.Genotype) float64 {
 	return 1 + s
 }
 
-func g3(x types.Genotype) float64 {
+func cecinner3(x types.Genotype) float64 {
 	var s float64
 	for i := 1; i < len(x); i++ {
 		v := x[i] + math.Pow(x[i-1]-0.5, 2) - 1

@@ -173,10 +173,18 @@ func Middle(a, b []float64) []float64 {
 	return middle
 }
 
-func GenerateEmpty2DSliceFloat64(outerLength, innerLength int) [][]float64 {
-	slice := make([][]float64, outerLength)
-	for i := range slice {
-		slice[i] = make([]float64, innerLength)
+// Zeros2DFloat64 creates a new 2D array with dimension defined by outerlength and innerlength. All values are set to 0
+func Zeros2DFloat64(outerLength, innerLength int) [][]float64 {
+	arr := make([][]float64, outerLength)
+	for i := range arr {
+		arr[i] = make([]float64, innerLength)
 	}
-	return slice
+	return arr
+}
+
+func EqualInterval(length int, min, max float64) (interval [][]float64) {
+	for i := 0; i < length; i++ {
+		interval = append(interval, []float64{min, max})
+	}
+	return interval
 }

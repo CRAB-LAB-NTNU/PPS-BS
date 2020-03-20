@@ -1,9 +1,6 @@
 package optimisers
 
 import (
-	"fmt"
-	"math/rand"
-
 	"github.com/CRAB-LAB-NTNU/PPS-BS/arrays"
 	"github.com/CRAB-LAB-NTNU/PPS-BS/biooperators"
 	"github.com/CRAB-LAB-NTNU/PPS-BS/types"
@@ -12,30 +9,52 @@ import (
 /*Moead is the struct describing the MOEA/D algorithm.
  */
 type Moead struct {
-	archive, ArchiveCopy, population                                     []types.Individual
-	Cmop                                                                 types.CMOP
-	WeightNeigbourhoodSize, WeightDistribution, populationSize           int
-	MaxChangeIndividuals, generation, EvaluationsMax                     int
-	fnEval, historyCounter                                               int
-	DEDifferentialWeight, CrossoverRate, DistributionIndex, maxViolation float64
-	BoundaryMinDistance, BoundaryFeasibleSelectionProbability            float64
-	WeightNeigbourhood                                                   [][]int
-	idealPoint                                                           []float64
-	BoundaryPairs                                                        []int
-	Weights                                                              []arrays.Vector
-	binaryCompleted                                                      bool
+	archive, archiveCopy, population                []types.Individual
+	cmop                                            types.Cmop
+	chm                                             types.CHM
+	T, WeightDistribution, populationSize           int
+	DecisionVariables, Nr, generation, maxFuncEvals int
+	fnEval, historyCounter                          int
+	F, Cr, DistributionIndex, maxViolation          float64
+	Weights                                         []arrays.Vector
+	WeightNeigbourhood                              [][]int
+	idealPoint                                      []float64
+	binaryPairs                                     []int
+}
+
+func NewMoead(cmop types.Cmop, chm types.CHM, t, weightDistribution, decisionVariables, nr int, f, cr, distributionIndex float64, maxFuncEvals int) *Moead {
+
+	moead := Moead{
+		cmop:               cmop,
+		chm:                chm,
+		T:                  t,
+		WeightDistribution: weightDistribution,
+		DecisionVariables:  decisionVariables,
+		Nr:                 nr,
+		F:                  f,
+		Cr:                 cr,
+		DistributionIndex:  distributionIndex,
+		maxFuncEvals:       maxFuncEvals,
+	}
+
+	moead.Initialise()
+	return &moead
 }
 
 func (m Moead) Ideal() []float64 {
 	return m.idealPoint
 }
 
-func (m Moead) MaxEvaluations() int {
-	return m.EvaluationsMax
+func (m Moead) MaxFuncEvals() int {
+	return m.maxFuncEvals
 }
 
 func (m Moead) Archive() []types.Individual {
 	return m.archive
+}
+
+func (m Moead) CHM() types.CHM {
+	return m.chm
 }
 
 func (m Moead) MaxViolation() float64 {
@@ -46,34 +65,34 @@ func (m Moead) Population() []types.Individual {
 	return m.population
 }
 
-func (m *Moead) Reset() {
+func (m Moead) Generation() int {
+	return m.generation
+}
 
+func (m *Moead) Reset() {
+	m.archive = []types.Individual{}
+	m.population = []types.Individual{}
+	m.generation = 0
+	m.fnEval = 0
+	m.Weights = []arrays.Vector{}
+	m.WeightNeigbourhood = [][]int{}
+	m.idealPoint = []float64{}
 }
 
 /*Initialise initialises the MOEA/D by calculating the weights, weight neighbourhood,
 population and ideal point.
 */
-func (m *Moead) Initialise(cmop types.CMOP) {
-	m.Cmop = cmop
-	m.archive = make([]types.Individual, 0)
-	m.population = make([]types.Individual, 0)
-	m.WeightNeigbourhood = make([][]int, 0)
-	m.idealPoint = make([]float64, 0)
-	m.generation = 0
-	m.fnEval = 0
-
-	m.binaryCompleted = false
-
-	m.Weights = arrays.UniformDistributedVectors(m.Cmop.ObjectiveCount, m.WeightDistribution)
+func (m *Moead) Initialise() {
+	m.Weights = arrays.UniformDistributedVectors(m.cmop.ObjectiveCount, m.WeightDistribution)
 
 	m.populationSize = len(m.Weights)
 
 	for i := range m.Weights {
-		m.WeightNeigbourhood = append(m.WeightNeigbourhood, arrays.NearestNeighbour(m.Weights, i, m.WeightNeigbourhoodSize))
+		m.WeightNeigbourhood = append(m.WeightNeigbourhood, arrays.NearestNeighbour(m.Weights, i, m.T))
 	}
 
 	for i := 0; i < m.populationSize; i++ {
-		ind := MoeadIndividual{Cmop: m.Cmop}
+		ind := MoeadIndividual{Cmop: m.cmop}
 		ind.Initialise()
 		m.population = append(m.population, &ind)
 	}
@@ -82,17 +101,21 @@ func (m *Moead) Initialise(cmop types.CMOP) {
 	m.historyCounter = -1
 }
 
+// FunctionEvaluations returns the current number of function evaluations performed
 func (m Moead) FunctionEvaluations() int {
 	return m.fnEval
 }
+
+//ConstraintViolation returns the total constraint violation of the population
 func (m Moead) ConstraintViolation() []float64 {
 	a := make([]float64, m.populationSize)
 	for i, ind := range m.population {
-		a[i] = ind.Fitness().ConstraintViolation()
+		a[i] = ind.Fitness().TotalViolation()
 	}
 	return a
 }
 
+// FeasibleRatio returns the ratio of feasible feasible individuals in the population
 func (m Moead) FeasibleRatio() float64 {
 	feas := 0
 	for _, i := range m.population {
@@ -105,73 +128,42 @@ func (m Moead) FeasibleRatio() float64 {
 }
 
 /*Evolve performs the genetic operator on all individuals in the population
- */
-func (m *Moead) Evolve(stage types.Stage, eps []float64) {
-	if stage == types.BorderSearch {
-		if len(m.archive) == 0 {
-			fmt.Println("Skipping binary")
-			m.binaryCompleted = true
-		} else {
-			if len(m.BoundaryPairs) == 0 {
-				m.BoundaryPairs = m.selectRandomPairs()
-				m.ArchiveCopy = m.archiveCopy()
-			}
-			m.boundarySearch()
-			m.generation++
-			return
-		}
+Based on the stage parameter different evolutionary steps are taken
+*/
+func (m *Moead) Evolve(stage types.Stage) {
+
+	//If the stage is binary search we evolve the population only using binary search
+	if stage.Type() == types.BinarySearch {
+		m.evolveBinary(stage)
+		return
+	}
+
+	//If the stage is not push we care about constraints
+	if stage.Type() != types.Push {
+		m.updateCHM()
 	}
 
 	for i := 0; i < m.populationSize; i++ {
-		hood := m.selectHood(0.9, i)
-		x := rand.Intn(len(hood))
-		y := x
-		for y == x {
-			y = rand.Intn(len(hood))
-		}
-		offSpring := m.crossover([]types.Individual{m.population[i], m.population[hood[x]], m.population[hood[y]]})[0]
 
+		hood := m.selectHood(0.9, i)
+		p := m.population[i]
+		x, y := m.selectIndividualsForCrossover(hood)
+		offspring := m.crossover(p, x, y)
 		m.fnEval++
-		// Update Ideal
-		f := offSpring.Fitness()
-		for j, val := range f.ObjectiveValues {
-			if val < m.idealPoint[j] {
-				m.idealPoint[j] = f.ObjectiveValues[j]
-			}
-		}
-		// Update max violation
-		if f.ConstraintViolation() > m.maxViolation {
-			m.maxViolation = f.ConstraintViolation()
-		}
-		c := 0
-		for c < m.MaxChangeIndividuals && len(hood) > 0 {
-			j := rand.Intn(len(hood))
-			replaced := false
-			if stage == types.Push {
-				replaced = m.pushProblems(hood[j], offSpring)
-			} else {
-				replaced = m.pullProblems(hood[j], offSpring, eps[m.generation])
-			}
-			if replaced == true {
-				c++
-			}
-			hood = arrays.Remove(hood, j)
+
+		m.updateIdealPoint(offspring)
+
+		m.updateMaxConstraintViolation(offspring)
+
+		//Would have preferred a more modular appraoch without the check
+		if stage.Type() == types.Push {
+			m.updatePopulation(hood, offspring, m.replaceIgnoringConstraints)
+		} else {
+			m.updatePopulation(hood, offspring, m.replaceWithConstraints)
 		}
 	}
 
 	m.generation++
 	m.archive = ndSelect(m.archive, m.population, m.populationSize)
-}
 
-func (m *Moead) ResetBinary() {
-	m.ArchiveCopy = []types.Individual{}
-	m.BoundaryPairs = []int{}
-}
-
-func (m Moead) IsBinarySearch() bool {
-	return len(m.BoundaryPairs) != 0
-}
-
-func (m Moead) BinaryDone() bool {
-	return m.binaryCompleted
 }

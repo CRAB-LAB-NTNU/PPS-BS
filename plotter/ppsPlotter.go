@@ -16,21 +16,18 @@ import (
 )
 
 type PpsPlotter struct {
-	Population   *[]types.Individual
-	Archive      *[]types.Individual
-	Ideal, Nadir *[][]float64
-	Epsilon      *[]float64
-	Generation   *int
-	Stage        *types.Stage
-	Config       *configs.PPS
-	Cmop         *types.CMOP
+	Population        *[]types.Individual
+	Archive           *[]types.Individual
+	Generation, Stage *int
+	Stages            []types.Stage
+	Config            *configs.Export
+	Cmop              *types.Cmop
 }
 
 func (p PpsPlotter) title() string {
-	stage := []string{"Push", "BoundarySearch", "Pull"}[*p.Stage]
+	stage := p.Stages[*p.Stage].Name()
 	gen := strconv.Itoa(*p.Generation)
-	eps := strconv.FormatFloat((*p.Epsilon)[*p.Generation], 'E', -1, 64)
-	return p.Cmop.Name + " Stage: " + stage + " gen: " + gen + " eps: " + eps
+	return p.Cmop.Name + " Stage: " + stage + " gen: " + gen
 }
 
 func (p PpsPlotter) PlotFrame() {
@@ -51,11 +48,6 @@ func (p PpsPlotter) PlotFrame() {
 		plt.Add(points)
 		plt.Legend.Add("Pareto Front", points)
 	}
-
-	idealNadir := [][]float64{(*p.Ideal)[*p.Generation], (*p.Nadir)[*p.Generation]}
-	extremes := p.floatScatter(idealNadir, color.RGBA{R: 0, G: 0, B: 255, A: 255})
-	plt.Add(extremes)
-	plt.Legend.Add("Ideal & Nadir", extremes)
 
 	population := p.individualScatter(*p.Population, color.RGBA{R: 0, G: 0, B: 0, A: 255})
 	plt.Add(population)
