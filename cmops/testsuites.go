@@ -2,6 +2,7 @@ package cmops
 
 import "github.com/CRAB-LAB-NTNU/PPS-BS/types"
 
+// CEC2020 problems from http://www.escience.cn/people/yongwang1/competition2020.html
 var CEC2020 = types.TestSuite{
 	Problems: []types.Cmop{
 		cecCmop1,
@@ -15,6 +16,7 @@ var CEC2020 = types.TestSuite{
 	Name:             "CEC2020",
 }
 
+// LIR2D contains the LIR-CMOP1-12 two objective problems.
 var LIR2D = types.TestSuite{
 	Problems: []types.Cmop{
 		lirCmop1,
@@ -34,6 +36,7 @@ var LIR2D = types.TestSuite{
 	Name:             "Lir2D",
 }
 
+// LIR3D contains the LIR-CMOP13-14 three objective problems.
 var LIR3D = types.TestSuite{
 	Problems: []types.Cmop{
 		lirCmop13,
