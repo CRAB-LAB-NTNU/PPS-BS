@@ -1,4 +1,4 @@
-package cmops
+package testsuites
 
 import (
 	"math"

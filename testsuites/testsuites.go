@@ -1,4 +1,4 @@
-package cmops
+package testsuites
 
 import "github.com/CRAB-LAB-NTNU/PPS-BS/types"
 
