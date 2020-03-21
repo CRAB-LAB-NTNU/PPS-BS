@@ -14,7 +14,6 @@ type CMOP interface {
 }
 */
 // ConstraintType describes which type of constraint it is. Either a equals-or-less-than or equals-or-greater-than constraint.
-// Should we assume only inequality constraints by using a small delta? Seems like most approaches do
 type ConstraintType int
 
 const (
