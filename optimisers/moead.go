@@ -1,17 +1,16 @@
 package optimisers
 
 import (
+	"github.com/CRAB-LAB-NTNU/PPS-BS/arrays"
 	"github.com/CRAB-LAB-NTNU/PPS-BS/biooperators"
 	"github.com/CRAB-LAB-NTNU/PPS-BS/types"
-
-	"github.com/CRAB-LAB-NTNU/PPS-BS/arrays"
 )
 
 /*Moead is the struct describing the MOEA/D algorithm.
  */
 type Moead struct {
 	archive, archiveCopy, population                []types.Individual
-	cmop                                            types.CMOP
+	cmop                                            types.Cmop
 	chm                                             types.CHM
 	T, WeightDistribution, populationSize           int
 	DecisionVariables, Nr, generation, maxFuncEvals int
@@ -23,7 +22,7 @@ type Moead struct {
 	binaryPairs                                     []int
 }
 
-func NewMoead(cmop types.CMOP, chm types.CHM, t, weightDistribution, decisionVariables, nr int, f, cr, distributionIndex float64, maxFuncEvals int) *Moead {
+func NewMoead(cmop types.Cmop, chm types.CHM, t, weightDistribution, decisionVariables, nr int, f, cr, distributionIndex float64, maxFuncEvals int) *Moead {
 
 	moead := Moead{
 		cmop:               cmop,
@@ -84,7 +83,7 @@ func (m *Moead) Reset() {
 population and ideal point.
 */
 func (m *Moead) Initialise() {
-	m.Weights = arrays.UniformDistributedVectors(m.cmop.NumberOfObjectives(), m.WeightDistribution)
+	m.Weights = arrays.UniformDistributedVectors(m.cmop.ObjectiveCount, m.WeightDistribution)
 
 	m.populationSize = len(m.Weights)
 
@@ -93,8 +92,8 @@ func (m *Moead) Initialise() {
 	}
 
 	for i := 0; i < m.populationSize; i++ {
-		ind := MoeadIndividual{D: m.DecisionVariables}
-		ind.InitialiseRandom(m.cmop)
+		ind := MoeadIndividual{Cmop: m.cmop}
+		ind.Initialise()
 		m.population = append(m.population, &ind)
 	}
 	m.idealPoint = biooperators.CalculateIdealPoints(m.population)
@@ -111,7 +110,7 @@ func (m Moead) FunctionEvaluations() int {
 func (m Moead) ConstraintViolation() []float64 {
 	a := make([]float64, m.populationSize)
 	for i, ind := range m.population {
-		a[i] = constraintViolation(ind.Fitness())
+		a[i] = ind.Fitness().TotalViolation()
 	}
 	return a
 }
@@ -120,7 +119,7 @@ func (m Moead) ConstraintViolation() []float64 {
 func (m Moead) FeasibleRatio() float64 {
 	feas := 0
 	for _, i := range m.population {
-		if feasible(i.Fitness()) {
+		if i.Fitness().Feasible() {
 			feas++
 		}
 	}
@@ -168,14 +167,3 @@ func (m *Moead) Evolve(stage types.Stage) {
 	m.archive = ndSelect(m.archive, m.population, m.populationSize)
 
 }
-
-/*
-func (m *Moead) ResetBinary() {
-	m.ArchiveCopy = []types.Individual{}
-	m.BinaryPairs = []int{}
-}
-
-func (m Moead) IsBinarySearch() bool {
-	return len(m.BinaryPairs) != 0
-}
-*/

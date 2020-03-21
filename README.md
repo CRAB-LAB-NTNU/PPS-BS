@@ -2,7 +2,7 @@
 
 Example main class setting up all the config for the framework:
 
-````
+```
 package main
 
 import (
@@ -12,6 +12,7 @@ import (
 	"github.com/CRAB-LAB-NTNU/PPS-BS/configs"
 	"github.com/CRAB-LAB-NTNU/PPS-BS/metrics"
 	"github.com/CRAB-LAB-NTNU/PPS-BS/simulator"
+	"github.com/CRAB-LAB-NTNU/PPS-BS/testsuites"
 	"github.com/CRAB-LAB-NTNU/PPS-BS/types"
 )
 
@@ -21,7 +22,7 @@ func main() {
 	config := setupConfigs()
 
 	simulator := simulator.NewSimulator(
-		[]int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
+		testsuites.LIR2D,
 		30,
 		config)
 
@@ -87,16 +88,16 @@ func setupConfigs() configs.Config {
 	}
 
 	exportconfig := configs.Export{
-		ExportVideo: true,
-		PlotEval:    false,
-		Runs:        1,
-		VideoMax:    3,
-		VideoMin:    0,
-		Metric:      metrics.InvertedGenerationalDistance,
+		ExportVideo:     false,
+		PlotEval:        false,
+		PrintGeneration: false,
+		VideoMax:        3,
+		VideoMin:        0,
+		Metric:          metrics.InvertedGenerationalDistance,
 	}
 
 	config := configs.Config{
-		MaxFuncEvals: 300000,
+		MaxFuncEvals: 300_000,
 
 		Moead: moeadconfig,
 
@@ -117,5 +118,5 @@ func setupConfigs() configs.Config {
 
 	return config
 
-}```
-````
+}
+```

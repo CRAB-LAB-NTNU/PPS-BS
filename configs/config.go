@@ -5,9 +5,9 @@ import "github.com/CRAB-LAB-NTNU/PPS-BS/types"
 type Config struct {
 
 	// Common parameters
-	MaxFuncEvals int
-	Export       Export
-
+	MaxFuncEvals    int
+	Export          Export
+	PrintGeneration bool
 	//Optimizer
 	Moead Moead
 

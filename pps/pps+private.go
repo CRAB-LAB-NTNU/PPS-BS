@@ -2,9 +2,6 @@ package pps
 
 import (
 	"fmt"
-	"log"
-	"os"
-	"strconv"
 	"time"
 
 	"github.com/CRAB-LAB-NTNU/PPS-BS/biooperators"
@@ -13,11 +10,11 @@ import (
 	"github.com/CRAB-LAB-NTNU/PPS-BS/types"
 )
 
-func (pps *PPS) setIdealAndNadir(generation int) {
+func (pps *PPS) setIdealAndNadir() {
 	ip, np := biooperators.CalculateNadirAndIdealPoints(pps.moea.Population())
-
-	pps.idealPoints[generation] = ip
-	pps.nadirPoints[generation] = np
+	//Append in stead of initialising arrays at a fixed size to
+	pps.idealPoints = append(pps.idealPoints, ip)
+	pps.nadirPoints = append(pps.nadirPoints, np)
 }
 
 func (pps *PPS) changeStage(generation int) bool {
@@ -46,7 +43,7 @@ func (pps *PPS) initStage() {
 }
 
 func (pps *PPS) initPull() {
-	pps.moea.CHM().Initialise(pps.moea.Generation(), pps.moea.MaxViolation())
+	pps.moea.CHM().Initialise(pps.generation, pps.moea.MaxViolation())
 }
 
 func (pps PPS) currentStage() types.Stage {
@@ -61,51 +58,24 @@ func (pps *PPS) nextStage() {
 	}
 }
 
-func (pps PPS) plot(generation int) {
-
-	gen := strconv.Itoa(generation)
-	eps := strconv.FormatFloat(pps.moea.CHM().Threshold(generation), 'E', -1, 64)
-	prob := pps.cmop.Name() + "." + pps.moea.CHM().Name()
-	stage := pps.currentStage().Name()
-
-	path := "graphics/gif/" + prob
-
-	if err := os.MkdirAll(path, 0755); err != nil {
-		log.Fatal(err)
-	}
-
-	plotter := plotter.Plotter2D{
-		Title:    prob + " Stage: " + stage + " gen: " + gen + " eps: " + eps,
-		LabelX:   "f1",
-		LabelY:   "f2",
-		Min:      pps.export.VideoMin,
-		Max:      pps.export.VideoMax,
-		Filename: path + "/" + gen + ".png",
-		Solution: pps.paretoPoints,
-		Extremes: [][]float64{pps.idealPoints[generation], pps.nadirPoints[generation], pps.moea.Ideal()},
-	}
-	plotter.Plot(pps.moea.Population(), pps.moea.Archive())
-}
-
-func (pps PPS) plotMetric() {
-	prob := pps.cmop.Name() + "." + pps.moea.CHM().Name()
-	path := "graphics/metric/" + prob
-	if err := os.MkdirAll(path, 0755); err != nil {
-		log.Fatal(err)
-	}
-	plotter := plotter.Plotter2D{
-		Title:    prob + " Metric",
-		LabelX:   "Generation",
-		LabelY:   "IGD",
-		Filename: path + "/" + prob + ".png",
-	}
-	plotter.PlotMetric(pps.MetricData, pps.SwitchPoint)
-}
-
 func (pps *PPS) printData(gen int) {
 	t := time.Now()
 	formatted := fmt.Sprintf("%d-%02d-%02dT%02d:%02d:%02d",
 		t.Year(), t.Month(), t.Day(),
 		t.Hour(), t.Minute(), t.Second())
 	fmt.Println(formatted, ",", gen, ",", pps.Stage(), ",", pps.moea.MaxViolation(), ",", pps.moea.FeasibleRatio(), ",", pps.moea.CHM().Threshold(gen), ",", pps.Performance())
+}
+
+func (pps *PPS) setupPlotter() {
+	pop := pps.moea.Population()
+	arc := pps.moea.Archive()
+	pps.plotter = plotter.PpsPlotter{
+		Population: &pop,
+		Archive:    &arc,
+		Generation: &pps.generation,
+		Stage:      &pps.stage,
+		Config:     &pps.export,
+		Cmop:       &pps.cmop,
+		Stages:     pps.stages,
+	}
 }

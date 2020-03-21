@@ -4,6 +4,7 @@ import (
 	"math"
 )
 
+/*
 // CMOP is a interface describing a multi objective optimisation problem
 type CMOP interface {
 	NumberOfObjectives() int
@@ -11,9 +12,8 @@ type CMOP interface {
 	Name() string
 	Calculate(Genotype) Fitness
 }
-
+*/
 // ConstraintType describes which type of constraint it is. Either a equals-or-less-than or equals-or-greater-than constraint.
-// Should we assume only inequality constraints by using a small delta? Seems like most approaches do
 type ConstraintType int
 
 const (
@@ -28,7 +28,6 @@ type MOEA interface {
 	MaxFuncEvals() int
 	MaxViolation() float64
 	Population() []Individual
-	Generation() int
 	Initialise()
 	FunctionEvaluations() int
 	FeasibleRatio() float64
@@ -42,8 +41,9 @@ type MOEA interface {
 type Individual interface {
 	Genotype() Genotype //TODO: se på måter å gjøre dette mer generelt senere
 	Fitness() Fitness
-	UpdateFitness(CMOP) Fitness
+	UpdateFitness() Fitness
 	Copy() Individual
+	Initialise()
 }
 
 type Fitness struct {
@@ -63,16 +63,19 @@ func (f Fitness) Violation(c int) float64 {
 }
 
 // TotalViolation returns the total constraint violation of all constraints.
-func (f Fitness) TotalViolation() float64 {
-	var total float64
-	for pos, constraintVal := range f.ConstraintValues {
-		if f.ConstraintTypes[pos] == EqualsOrGreaterThanZero && constraintVal < 0 {
-			total += math.Abs(constraintVal)
-		} else if f.ConstraintTypes[pos] == EqualsOrLessThanZero && constraintVal > 0 {
-			total += constraintVal
-		}
+func (f Fitness) TotalViolation() (total float64) {
+	for pos := range f.ConstraintValues {
+		total += f.Violation(pos)
 	}
 	return total
+}
+
+/*
+Feasible returns true if an individual is feasible or false if it's infeasible,
+according to it's constraint values.
+*/
+func (f Fitness) Feasible() bool {
+	return f.TotalViolation() <= 0
 }
 
 type Genotype []float64

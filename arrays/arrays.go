@@ -181,3 +181,10 @@ func Zeros2DFloat64(outerLength, innerLength int) [][]float64 {
 	}
 	return arr
 }
+
+func EqualInterval(length int, min, max float64) (interval [][]float64) {
+	for i := 0; i < length; i++ {
+		interval = append(interval, []float64{min, max})
+	}
+	return interval
+}

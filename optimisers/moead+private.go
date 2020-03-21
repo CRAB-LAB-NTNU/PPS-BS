@@ -19,8 +19,8 @@ weight neighbourhood.
 func (m *Moead) crossover(p, x, y types.Individual) types.Individual {
 
 	child := MoeadIndividual{
-		D:        m.DecisionVariables,
-		genotype: make([]float64, m.DecisionVariables),
+		Cmop:     m.cmop,
+		genotype: make([]float64, m.cmop.DecisionVariables),
 	}
 
 	for i := range child.Genotype() {
@@ -33,7 +33,7 @@ func (m *Moead) crossover(p, x, y types.Individual) types.Individual {
 
 	child.PolynomialMutation(m.DistributionIndex)
 	child.Repair()
-	child.UpdateFitness(m.cmop)
+	child.UpdateFitness()
 	return &child
 }
 
@@ -190,12 +190,12 @@ func (m *Moead) boundarySearch(binary *stages.Binary) {
 		}
 
 		middlePoint := arrays.Middle(p.Genotype(), pair.Genotype())
-		ind := MoeadIndividual{D: len(p.Genotype())}
+		ind := MoeadIndividual{Cmop: m.cmop}
 		ind.SetGenotype(middlePoint)
 		ind.Repair()
-		ind.UpdateFitness(m.cmop)
+		ind.UpdateFitness()
 
-		if feasible(ind.Fitness()) {
+		if ind.Fitness().Feasible() {
 			m.archiveCopy[j] = &ind
 		} else {
 			m.population[i] = &ind
@@ -207,7 +207,7 @@ func (m *Moead) boundarySearch(binary *stages.Binary) {
 		binary.SetOver()
 		m.maxViolation = -1
 		for _, p := range m.population {
-			cv := constraintViolation(p.Fitness())
+			cv := p.Fitness().TotalViolation()
 			if cv > m.maxViolation {
 				m.maxViolation = cv
 			}

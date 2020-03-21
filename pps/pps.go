@@ -1,13 +1,6 @@
 package pps
 
 import (
-	"fmt"
-	"log"
-	"os"
-	"os/exec"
-
-	"github.com/CRAB-LAB-NTNU/PPS-BS/arrays"
-
 	"github.com/CRAB-LAB-NTNU/PPS-BS/configs"
 	"github.com/CRAB-LAB-NTNU/PPS-BS/plotter"
 	"github.com/CRAB-LAB-NTNU/PPS-BS/types"
@@ -15,18 +8,18 @@ import (
 
 // PPS is a struct describing the contents of the Push & Pull Framework
 type PPS struct {
-	cmop                                   types.CMOP
+	cmop                                   types.Cmop
 	moea                                   types.MOEA
 	stages                                 []types.Stage
-	stage                                  int
+	stage, generation                      int
 	idealPoints, nadirPoints, paretoPoints [][]float64
-	SwitchPoint                            int
 	MetricData                             []float64
 	export                                 configs.Export
 	Result                                 types.Results
+	plotter                                plotter.PpsPlotter
 }
 
-func NewPPS(cmop types.CMOP, moea types.MOEA, stages []types.Stage, export configs.Export) PPS {
+func NewPPS(cmop types.Cmop, moea types.MOEA, stages []types.Stage, export configs.Export) PPS {
 	pps := PPS{
 		cmop:   cmop,
 		moea:   moea,
@@ -42,50 +35,55 @@ func NewPPS(cmop types.CMOP, moea types.MOEA, stages []types.Stage, export confi
 // Initialise initialises the PPS framework with a given CMOP, MOEA and CHM
 func (pps *PPS) Initialise() {
 
-	pps.idealPoints = arrays.Zeros2DFloat64(pps.moea.MaxFuncEvals(), pps.cmop.NumberOfObjectives())
-	pps.nadirPoints = arrays.Zeros2DFloat64(pps.moea.MaxFuncEvals(), pps.cmop.NumberOfObjectives())
 	pps.stage = 0
-	if points, err := plotter.ParseDatFile("arraydata/pf_data/" + pps.cmop.Name() + ".dat"); err == nil {
-		pps.paretoPoints = points
-	} else {
-		fmt.Println("ERROR", err)
-	}
 
 }
 
 // Run performs a run of the PPS framework
 func (pps *PPS) Run() float64 {
-	gen := 0
+	if pps.export.ExportVideo {
+		pps.setupPlotter()
+	}
 	for pps.moea.FunctionEvaluations() < pps.moea.MaxFuncEvals() {
 
-		pps.setIdealAndNadir(gen)
+		pps.setIdealAndNadir()
 
-		if pps.changeStage(gen) {
+		if pps.changeStage(pps.generation) {
 			pps.nextStage()
 			pps.initStage()
+			pop := pps.moea.Population()
+			pps.plotter.Population = &pop
 		}
 		pps.moea.Evolve(pps.currentStage())
-		pps.printData(gen)
+
+		if pps.export.PrintGeneration {
+			pps.printData(pps.generation)
+		}
 
 		if pps.export.ExportVideo {
-			pps.plot(gen)
+			arc := pps.moea.Archive()
+			pps.plotter.Archive = &arc
+			pps.plotter.PlotFrame()
 		}
+
 		if pps.export.PlotEval {
 			pps.MetricData = append(pps.MetricData, pps.Performance())
 		}
-		gen++
+
+		pps.generation++
 	}
 	if pps.export.ExportVideo {
-		pps.ExportVideo()
+		pps.plotter.ExportVideo()
 	}
+	/* TODO needs to be implemented.
 	if pps.export.PlotEval {
-		pps.plotMetric()
+		pps.plotter.PlotMetric()
 	}
-
+	*/
 	return pps.Performance()
 }
 
-func (pps *PPS) CMOP() types.CMOP {
+func (pps *PPS) CMOP() types.Cmop {
 	return pps.cmop
 }
 func (pps *PPS) Stages() []string {
@@ -104,27 +102,6 @@ func (pps PPS) Stage() string {
 	return pps.currentStage().Name()
 }
 
-func (pps PPS) ExportVideo() {
-	prob := pps.cmop.Name() + "." + pps.moea.CHM().Name()
-	path := "graphics/vids/"
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		fmt.Println("path eksisterer ikke, produserer.")
-		os.MkdirAll(path, 0755)
-	}
-
-	if err := os.Remove(path + prob + ".mp4"); err != nil {
-		fmt.Println(err)
-	} else {
-		fmt.Println("Removed old file.")
-	}
-
-	cmd := exec.Command("ffmpeg", "-framerate", "20", "-i", "./graphics/gif/"+prob+"/%00d.png", "./graphics/vids/"+prob+".mp4")
-	if err := cmd.Run(); err != nil {
-		fmt.Println("Feil ved laging av video")
-		log.Fatal(err)
-	}
-}
-
 func (pps PPS) Performance() float64 {
-	return pps.export.Metric(pps.moea.Archive(), pps.paretoPoints)
+	return pps.export.Metric(pps.moea.Archive(), pps.cmop.TrueParetoFront())
 }

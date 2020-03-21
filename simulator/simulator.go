@@ -2,56 +2,69 @@ package simulator
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/CRAB-LAB-NTNU/PPS-BS/chm"
 	"github.com/CRAB-LAB-NTNU/PPS-BS/configs"
 	"github.com/CRAB-LAB-NTNU/PPS-BS/optimisers"
 	"github.com/CRAB-LAB-NTNU/PPS-BS/pps"
 	"github.com/CRAB-LAB-NTNU/PPS-BS/stages"
-	"github.com/CRAB-LAB-NTNU/PPS-BS/testSuite"
 	"github.com/CRAB-LAB-NTNU/PPS-BS/types"
 )
 
 type Simulator struct {
-	Problems []int
-	Runs     int
-	Config   configs.Config
-	results  []types.Results
+	TestSuite types.TestSuite
+	Runs      int
+	Config    configs.Config
+	results   []types.Results
 }
 
-func NewSimulator(problems []int, runs int, config configs.Config) Simulator {
+func NewSimulator(testSuite types.TestSuite, runs int, config configs.Config) Simulator {
 	s := Simulator{
-		Problems: problems,
-		Runs:     runs,
-		Config:   config,
-	}
-
-	for i := 0; i <= len(problems); i++ {
-		s.results = append(s.results, types.Results{})
+		TestSuite: testSuite,
+		Runs:      runs,
+		Config:    config,
 	}
 
 	return s
 }
-func (s *Simulator) Simulate() {
-	for _, p := range s.Problems {
-		cmop := testSuite.NewLIRCMOP(p)
 
-		fmt.Println("Starting run of", cmop.Name())
-		var pps pps.PPS
+func (s *Simulator) Simulate() {
+	for p, cmop := range s.TestSuite.Problems {
+
+		start := time.Now()
+		fmt.Println("Starting run of", cmop.Name)
+
+		channel := make(chan float64)
+
+		// Start (s.Runs) new Go routines for and send pps result to channel.
 		for r := 0; r < s.Runs; r++ {
-			pps = s.setupInstance(cmop)
-			s.results[p].Add(pps.Run())
+			go func(cmop types.Cmop, r int, channel chan float64) {
+				pps := s.setupInstance(cmop)
+				channel <- pps.Run()
+			}(cmop, r, channel)
 		}
 
-		s.printResults(p, pps)
+		// Create result struct, then move all items from channel to result.
+		result := types.Results{}
+		for r := 0; r < s.Runs; r++ {
+			result.Add(<-channel)
+		}
+
+		s.results = append(s.results, result)
+
+		s.printResults(p, cmop.Name, time.Since(start))
 
 	}
 }
 
-func (s *Simulator) printResults(p int, pps pps.PPS) {
-	fmt.Println("PROBLEM:", pps.CMOP().Name())
-	fmt.Println("Stages:", pps.Stages())
-	fmt.Println("Constraint Handling Method:", pps.MOEA().CHM().Name())
+func (s *Simulator) printResults(p int, cmopName string, runTime time.Duration) {
+	fmt.Println("PROBLEM:", cmopName)
+	fmt.Println("Run time:", runTime)
+	/*
+		fmt.Println("Stages:", pps.Stages())
+		fmt.Println("Constraint Handling Method:", pps.MOEA().CHM().Name())
+	*/
 
 	fmt.Println("MEAN:", s.results[p].Mean())
 	fmt.Println("VAR:", s.results[p].Variance())
@@ -59,15 +72,15 @@ func (s *Simulator) printResults(p int, pps pps.PPS) {
 	fmt.Println()
 }
 
-func (s *Simulator) setupInstance(cmop types.CMOP) pps.PPS {
+func (s *Simulator) setupInstance(cmop types.Cmop) pps.PPS {
 
 	var stages []types.Stage
 
 	for i := range s.Config.Stages {
-		stages = append(stages, s.setupStage(i, cmop.NumberOfObjectives()))
+		stages = append(stages, s.setupStage(i, cmop.ObjectiveCount))
 	}
 
-	chm := s.setupChm(cmop.NumberOfConstraints())
+	chm := s.setupChm(cmop.ConstraintCount)
 
 	moea := s.setupMoea(cmop, chm)
 
@@ -121,7 +134,7 @@ func (s *Simulator) setupChm(numberOfConstraints int) types.CHM {
 	panic("Error setting up CHM")
 }
 
-func (s *Simulator) setupMoea(cmop types.CMOP, chm types.CHM) types.MOEA {
+func (s *Simulator) setupMoea(cmop types.Cmop, chm types.CHM) types.MOEA {
 	return optimisers.NewMoead(
 		cmop, chm,
 		s.Config.Moead.T,
@@ -135,7 +148,7 @@ func (s *Simulator) setupMoea(cmop types.CMOP, chm types.CHM) types.MOEA {
 	)
 }
 
-func (s *Simulator) setupPps(cmop types.CMOP, moea types.MOEA, stages []types.Stage) pps.PPS {
+func (s *Simulator) setupPps(cmop types.Cmop, moea types.MOEA, stages []types.Stage) pps.PPS {
 	return pps.NewPPS(
 		cmop,
 		moea,

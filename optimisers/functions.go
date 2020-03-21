@@ -21,7 +21,7 @@ func ndSelect(archive, population []types.Individual, n int) []types.Individual 
 	var result []types.Individual
 
 	for i, ind := range union {
-		if feasible(ind.Fitness()) {
+		if ind.Fitness().Feasible() {
 			feasibleCount++
 			feasibleSet = append(feasibleSet, union[i])
 		}
@@ -61,7 +61,7 @@ func selectBinaryResult(archive, population []types.Individual, n int, p float64
 	var feasibleCount int
 	k := float64(len(population)) / float64(len(archive)) * p
 	for _, ind := range archive {
-		if feasible(ind.Fitness()) && rand.Float64() < k {
+		if ind.Fitness().Feasible() && rand.Float64() < k {
 			result = append(result, ind)
 			feasibleCount++
 		}
@@ -71,20 +71,6 @@ func selectBinaryResult(archive, population []types.Individual, n int, p float64
 		result = append(result, population[i])
 	}
 	return result
-}
-
-func constraintViolation(fitness types.Fitness) float64 {
-	var s float64
-	for _, cValue := range fitness.ConstraintValues {
-		if cValue < 0 {
-			s += math.Abs(cValue)
-		}
-	}
-	return s
-}
-
-func feasible(fitness types.Fitness) bool {
-	return constraintViolation(fitness) <= 0
 }
 
 func tchebycheff(objectiveValues, idealPoint []float64, weight arrays.Vector) float64 {

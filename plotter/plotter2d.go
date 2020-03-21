@@ -1,14 +1,9 @@
 package plotter
 
 import (
-	"bufio"
-	"fmt"
 	"image/color"
 	"log"
-	"math"
-	"os"
 	"strconv"
-	"strings"
 
 	"github.com/CRAB-LAB-NTNU/PPS-BS/types"
 	"gonum.org/v1/plot"
@@ -31,7 +26,7 @@ func (plotter2d *Plotter2D) Plot(pops ...[]types.Individual) {
 	p.Y.Min = plotter2d.Min
 	p.Add(plotter.NewGrid())
 	if plotter2d.Solution != nil {
-		pareto := convertParetoToPoints(plotter2d.Solution, plotter2d.Max)
+		pareto := convertParetoToPoints(plotter2d.Solution, plotter2d.Min, plotter2d.Max)
 		paretoScatter, _ := plotter.NewScatter(pareto)
 		paretoScatter.GlyphStyle.Color = color.RGBA{R: 0, G: 255, B: 0, A: 255}
 		paretoScatter.GlyphStyle.Radius = vg.Points(0.5)
@@ -39,7 +34,7 @@ func (plotter2d *Plotter2D) Plot(pops ...[]types.Individual) {
 		p.Legend.Add("Solution", paretoScatter)
 	}
 	if plotter2d.Extremes != nil {
-		extr := convertParetoToPoints(plotter2d.Extremes, plotter2d.Max)
+		extr := convertParetoToPoints(plotter2d.Extremes, plotter2d.Min, plotter2d.Max)
 		extrScatter, _ := plotter.NewScatter(extr)
 		extrScatter.GlyphStyle.Color = color.RGBA{R: 0, G: 0, B: 255, A: 255}
 		extrScatter.GlyphStyle.Radius = vg.Points(2)
@@ -47,7 +42,7 @@ func (plotter2d *Plotter2D) Plot(pops ...[]types.Individual) {
 		p.Add(extrScatter)
 	}
 	for i, pop := range pops {
-		x := convertIndividualsToPoints2D(pop, plotter2d.Max)
+		x := convertIndividualsToPoints2D(pop, plotter2d.Min, plotter2d.Max)
 		s, _ := plotter.NewScatter(x)
 		s.GlyphStyle.Color = color.RGBA{R: 255 * uint8(i), G: 0, B: 0, A: 255}
 		s.GlyphStyle.Radius = vg.Points(1)
@@ -80,105 +75,4 @@ func (plotter2d *Plotter2D) PlotMetric(data []float64, switchPoint int) {
 	if err != nil {
 		log.Panic(err)
 	}
-}
-
-func convertFloatToPoints(data []float64, switchPoint int) plotter.XYs {
-	var points plotter.XYs
-	for i, v := range data {
-		if i < switchPoint {
-			continue
-		}
-		point := plotter.XY{X: float64(i), Y: v}
-		points = append(points, point)
-	}
-	return points
-}
-
-func convertParetoToPoints(pareto [][]float64, max float64) plotter.XYs {
-	var points plotter.XYs
-	for _, set := range pareto {
-		if set[0] > max || set[1] > max {
-			continue
-		}
-		point := plotter.XY{
-			X: set[0],
-			Y: set[1],
-		}
-		points = append(points, point)
-	}
-	return points
-}
-
-func convertIndividualsToPoints2D(individuals []types.Individual, max float64) plotter.XYs {
-	var points plotter.XYs
-	for _, ind := range individuals {
-		objectiveValues := ind.Fitness().ObjectiveValues
-		if objectiveValues[0] > max || objectiveValues[1] > max {
-			continue
-		}
-		point := plotter.XY{
-			X: objectiveValues[0],
-			Y: objectiveValues[1],
-		}
-		points = append(points, point)
-	}
-	return points
-}
-
-func ParseDatFile(path string) ([][]float64, error) {
-	var bucket [][]float64
-	if file, err := os.Open(path); err != nil {
-		fmt.Println("Error :)")
-		return nil, err
-	} else {
-		defer file.Close()
-		scanner := bufio.NewScanner(file)
-		for scanner.Scan() {
-			line := scanner.Text()
-			cords := strings.Fields(line)
-			var point []float64
-			for _, f := range cords {
-				if v, err := ParseFloat(f); err != nil {
-					log.Fatal(err)
-				} else {
-					point = append(point, v)
-				}
-			}
-			bucket = append(bucket, point)
-		}
-		return bucket, nil
-	}
-}
-
-func ParseFloat(str string) (float64, error) {
-	val, err := strconv.ParseFloat(str, 64)
-	if err == nil {
-		return val, nil
-	}
-
-	//Some number may be seperated by comma, for example, 23,120,123, so remove the comma firstly
-	str = strings.Replace(str, ",", "", -1)
-
-	//Some number is specifed in scientific notation
-	pos := strings.IndexAny(str, "eE")
-	if pos < 0 {
-		return strconv.ParseFloat(str, 64)
-	}
-
-	var baseVal float64
-	var expVal int64
-
-	baseStr := str[0:pos]
-	baseVal, err = strconv.ParseFloat(baseStr, 64)
-	if err != nil {
-		return 0, err
-	}
-
-	expStr := str[(pos + 1):]
-	expVal, err = strconv.ParseInt(expStr, 10, 64)
-	if err != nil {
-		return 0, err
-	}
-
-	return baseVal * math.Pow10(int(expVal)), nil
 }
