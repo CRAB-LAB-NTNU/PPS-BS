@@ -2,6 +2,7 @@ package simulator
 
 import (
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/CRAB-LAB-NTNU/PPS-BS/chm"
@@ -33,7 +34,6 @@ func (s *Simulator) Simulate() {
 	for p, cmop := range s.TestSuite.Problems {
 
 		start := time.Now()
-		fmt.Println("Starting run of", cmop.Name)
 
 		channel := make(chan float64)
 
@@ -56,9 +56,30 @@ func (s *Simulator) Simulate() {
 		s.printResults(p, cmop.Name, time.Since(start))
 
 	}
+	s.printSweep()
+}
+
+func (s *Simulator) printSweep() {
+	fmt.Print(s.Config.Moead.Cr, s.Config.Moead.F, " ")
+	for i := range s.TestSuite.Problems {
+		validCount := s.Runs
+		for _, v := range s.results[i].Values() {
+			if math.IsInf(v, 1) {
+				validCount--
+			}
+		}
+		if validCount < s.Runs {
+			fmt.Print(validCount, "-valid ")
+		} else {
+			fmt.Print(s.results[i].Mean(), " ")
+		}
+	}
+	fmt.Println()
+
 }
 
 func (s *Simulator) printResults(p int, cmopName string, runTime time.Duration) {
+	return
 	fmt.Println("PROBLEM:", cmopName)
 	fmt.Println("Run time:", runTime)
 	/*
