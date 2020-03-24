@@ -5,6 +5,7 @@ import (
 	"math"
 	"time"
 
+	"github.com/CRAB-LAB-NTNU/PPS-BS/arrays"
 	"github.com/CRAB-LAB-NTNU/PPS-BS/chm"
 	"github.com/CRAB-LAB-NTNU/PPS-BS/configs"
 	"github.com/CRAB-LAB-NTNU/PPS-BS/optimisers"
@@ -56,7 +57,6 @@ func (s *Simulator) Simulate() {
 		s.printResults(p, cmop.Name, time.Since(start))
 
 	}
-	s.printSweep()
 }
 
 func (s *Simulator) printSweep() {
@@ -79,7 +79,6 @@ func (s *Simulator) printSweep() {
 }
 
 func (s *Simulator) printResults(p int, cmopName string, runTime time.Duration) {
-	return
 	fmt.Println("PROBLEM:", cmopName)
 	fmt.Println("Run time:", runTime)
 	/*
@@ -87,6 +86,7 @@ func (s *Simulator) printResults(p int, cmopName string, runTime time.Duration) 
 		fmt.Println("Constraint Handling Method:", pps.MOEA().CHM().Name())
 	*/
 
+	fmt.Println("BEST:", arrays.Min(s.results[p].Values()...))
 	fmt.Println("MEAN:", s.results[p].Mean())
 	fmt.Println("VAR:", s.results[p].Variance())
 	fmt.Println("STD:", s.results[p].StandardDeviation())

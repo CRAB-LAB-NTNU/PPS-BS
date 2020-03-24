@@ -188,3 +188,11 @@ func EqualInterval(length int, min, max float64) (interval [][]float64) {
 	}
 	return interval
 }
+
+func Min(floats ...float64) (min float64) {
+	min = math.MaxFloat64
+	for _, f := range floats {
+		min = math.Min(f, min)
+	}
+	return min
+}
