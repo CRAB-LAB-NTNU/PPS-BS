@@ -31,7 +31,6 @@ func NewSimulator(testSuite types.TestSuite, runs int, config configs.Config) Si
 
 func (s *Simulator) Simulate() {
 	for _, cmop := range s.TestSuite.Problems {
-		fmt.Println("Starting", cmop.Name)
 		type indChan chan []types.Individual
 		channel := make(indChan)
 
