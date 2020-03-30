@@ -1,14 +1,11 @@
-package filewriter
+package filehandling
 
 import (
-	"encoding/csv"
 	"log"
 	"os"
-	"strconv"
-
-	"github.com/CRAB-LAB-NTNU/PPS-BS/types"
 )
 
+/* Commented out because of circular dependency.
 //WriteArrayToFile writes the objective values of an array of individuals to a destination file
 func WriteArrayToFile(individuals []types.Individual, destination string) {
 
@@ -31,9 +28,18 @@ func WriteArrayToFile(individuals []types.Individual, destination string) {
 
 	}
 }
-
+*/
 func checkError(message string, err error) {
 	if err != nil {
 		log.Fatal(message, err)
 	}
+}
+
+func ControlPath(path string) error {
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		if innerErr := os.MkdirAll(path, 0755); innerErr != nil {
+			return innerErr
+		}
+	}
+	return nil
 }
