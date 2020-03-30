@@ -2,7 +2,6 @@ package simulator
 
 import (
 	"fmt"
-	"math"
 
 	"github.com/CRAB-LAB-NTNU/PPS-BS/chm"
 	"github.com/CRAB-LAB-NTNU/PPS-BS/configs"
@@ -32,7 +31,7 @@ func NewSimulator(testSuite types.TestSuite, runs int, config configs.Config) Si
 
 func (s *Simulator) Simulate() {
 	for _, cmop := range s.TestSuite.Problems {
-
+		fmt.Println("Starting", cmop.Name)
 		type indChan chan []types.Individual
 		channel := make(indChan)
 
@@ -46,19 +45,8 @@ func (s *Simulator) Simulate() {
 
 		// Create result struct, then move all items from channel to result.
 		result := metrics.Results{
-			ParetoFront: cmop.TrueParetoFront(),
-			HyperVolumeReference: func() []float64 {
-				nadir := make([]float64, cmop.ObjectiveCount)
-				for _, point := range cmop.TrueParetoFront() {
-					for i, cord := range point {
-						nadir[i] = math.Max(cord, nadir[i])
-					}
-				}
-				for i := range nadir {
-					nadir[i] *= 1.2
-				}
-				return nadir
-			},
+			ParetoFront:          cmop.TrueParetoFront(),
+			HyperVolumeReference: metrics.HVReferenceNadirTimes(s.Config.HVCoefficient, cmop),
 		}
 		for r := 0; r < s.Runs; r++ {
 			result.Add(<-channel)

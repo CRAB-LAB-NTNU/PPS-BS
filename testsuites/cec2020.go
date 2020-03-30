@@ -48,7 +48,7 @@ var cecCmop2 = types.Cmop{
 		}
 		g := cecinner2(x)
 		f1 := x[0] * g
-		f2 := g * math.Sqrt(math.Pow(1.1, 2)-math.Pow(f1/g, 2))
+		f2 := g * math.Sqrt(math.Max(0, math.Pow(1.1, 2)-math.Pow(f1/g, 2)))
 		tan := math.Pow(math.Atan(f2/f1), 4)
 		l := math.Pow(math.Cos(6*tan), 10)
 		c1 := math.Pow(f1/(1+0.15*l), 2) + math.Pow(f2/(1+0.75*l), 2) - 1
@@ -167,10 +167,10 @@ var cecCmop6 = types.Cmop{
 		// We KNOW (f1/g)^2 <= 2 because of the substitution of f1:
 		// (f1/g)^2 = ((g * x[0]) / g)^2 = x[0]^2
 		// and all X is in the range [0,sqrt(2)].
-		// The below truncation is therefore valid.
+		// The below truncation to 0 is therefore valid.
 		// You can also check this by
 		// var test bool = 2.0 == math.Pow(math.Sqrt(2.0), 2)
-		f2 := g * math.Sqrt(2-math.Min(math.Pow(f1/g, 2), 2))
+		f2 := g * math.Sqrt(math.Max(0, 2-math.Pow(f1/g, 2)))
 
 		c1 := (3 - math.Pow(f1, 2) - f2) * (3 - 2*math.Pow(f1, 2) - f2)
 		c2 := (3 - 0.625*math.Pow(f1, 2) - f2) * (3 - 7*math.Pow(f1, 2) - f2)
