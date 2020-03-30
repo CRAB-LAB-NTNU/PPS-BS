@@ -3,11 +3,10 @@ package simulator
 import (
 	"fmt"
 	"math"
-	"time"
 
-	"github.com/CRAB-LAB-NTNU/PPS-BS/arrays"
 	"github.com/CRAB-LAB-NTNU/PPS-BS/chm"
 	"github.com/CRAB-LAB-NTNU/PPS-BS/configs"
+	"github.com/CRAB-LAB-NTNU/PPS-BS/metrics"
 	"github.com/CRAB-LAB-NTNU/PPS-BS/optimisers"
 	"github.com/CRAB-LAB-NTNU/PPS-BS/pps"
 	"github.com/CRAB-LAB-NTNU/PPS-BS/stages"
@@ -18,7 +17,7 @@ type Simulator struct {
 	TestSuite types.TestSuite
 	Runs      int
 	Config    configs.Config
-	results   []types.Results
+	results   []metrics.Results
 }
 
 func NewSimulator(testSuite types.TestSuite, runs int, config configs.Config) Simulator {
@@ -32,66 +31,64 @@ func NewSimulator(testSuite types.TestSuite, runs int, config configs.Config) Si
 }
 
 func (s *Simulator) Simulate() {
-	for p, cmop := range s.TestSuite.Problems {
+	for _, cmop := range s.TestSuite.Problems {
 
-		start := time.Now()
-
-		channel := make(chan float64)
+		type indChan chan []types.Individual
+		channel := make(indChan)
 
 		// Start (s.Runs) new Go routines for and send pps result to channel.
 		for r := 0; r < s.Runs; r++ {
-			go func(cmop types.Cmop, r int, channel chan float64) {
+			go func(cmop types.Cmop, r int, channel indChan) {
 				pps := s.setupInstance(cmop)
 				channel <- pps.Run()
 			}(cmop, r, channel)
 		}
 
 		// Create result struct, then move all items from channel to result.
-		result := types.Results{}
+		result := metrics.Results{
+			ParetoFront: cmop.TrueParetoFront(),
+			HyperVolumeReference: func() []float64 {
+				nadir := make([]float64, cmop.ObjectiveCount)
+				for _, point := range cmop.TrueParetoFront() {
+					for i, cord := range point {
+						nadir[i] = math.Max(cord, nadir[i])
+					}
+				}
+				for i := range nadir {
+					nadir[i] *= 1.2
+				}
+				return nadir
+			},
+		}
 		for r := 0; r < s.Runs; r++ {
 			result.Add(<-channel)
 		}
 
 		s.results = append(s.results, result)
-
-		s.printResults(p, cmop.Name, time.Since(start))
-
 	}
+	s.printSweep()
 }
 
 func (s *Simulator) printSweep() {
-	fmt.Print(s.Config.Moead.Cr, s.Config.Moead.F, " ")
-	for i := range s.TestSuite.Problems {
-		validCount := s.Runs
-		for _, v := range s.results[i].Values() {
-			if math.IsInf(v, 1) {
-				validCount--
-			}
-		}
-		if validCount < s.Runs {
-			fmt.Print(validCount, "-valid ")
-		} else {
-			fmt.Print(s.results[i].Mean(), " ")
-		}
+	for i, r := range s.results {
+		fmt.Println(s.TestSuite.Problems[i].Name, s.Config.Moead.Cr, s.Config.Moead.F, r.FeasibilityRate(), r.IGD.Mean(), r.HV.Mean())
 	}
-	fmt.Println()
-
 }
 
+/*
 func (s *Simulator) printResults(p int, cmopName string, runTime time.Duration) {
 	fmt.Println("PROBLEM:", cmopName)
 	fmt.Println("Run time:", runTime)
-	/*
 		fmt.Println("Stages:", pps.Stages())
 		fmt.Println("Constraint Handling Method:", pps.MOEA().CHM().Name())
-	*/
 
-	fmt.Println("BEST:", arrays.Min(s.results[p].Values()...))
-	fmt.Println("MEAN:", s.results[p].Mean())
-	fmt.Println("VAR:", s.results[p].Variance())
-	fmt.Println("STD:", s.results[p].StandardDeviation())
-	fmt.Println()
-}
+		fmt.Println("BEST:", arrays.Min(s.results[p].Values()...))
+		fmt.Println("MEAN:", s.results[p].Mean())
+		fmt.Println("VAR:", s.results[p].Variance())
+		fmt.Println("STD:", s.results[p].StandardDeviation())
+		fmt.Println()
+	}
+*/
 
 func (s *Simulator) setupInstance(cmop types.Cmop) pps.PPS {
 
