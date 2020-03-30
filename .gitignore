@@ -22,3 +22,4 @@ graphics*
 **/.DS_Store
 results/
 results.copy/
+.tmp/
