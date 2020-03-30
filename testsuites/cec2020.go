@@ -161,7 +161,17 @@ var cecCmop6 = types.Cmop{
 		}
 		g := cecinner3(x)
 		f1 := g * x[0]
-		f2 := g * math.Sqrt(2-math.Pow(f1/g, 2))
+		// Because of rouding errors, (f1/g)^2 will ocasionally
+		// return 2.000000000000001.
+		// This makes 2 - (f1/g)^2 < 0 and the square root returns NaN.
+		// We KNOW (f1/g)^2 <= 2 because of the substitution of f1:
+		// (f1/g)^2 = ((g * x[0]) / g)^2 = x[0]^2
+		// and all X is in the range [0,sqrt(2)].
+		// The below truncation is therefore valid.
+		// You can also check this by
+		// var test bool = 2.0 == math.Pow(math.Sqrt(2.0), 2)
+		f2 := g * math.Sqrt(2-math.Min(math.Pow(f1/g, 2), 2))
+
 		c1 := (3 - math.Pow(f1, 2) - f2) * (3 - 2*math.Pow(f1, 2) - f2)
 		c2 := (3 - 0.625*math.Pow(f1, 2) - f2) * (3 - 7*math.Pow(f1, 2) - f2)
 		c3 := (1.62 - 0.18*math.Pow(f1, 2) - f2) * (1.125 - 0.125*math.Pow(f1, 2) - f2)
