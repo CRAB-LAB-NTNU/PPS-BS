@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"github.com/CRAB-LAB-NTNU/PPS-BS/configs"
+	"github.com/CRAB-LAB-NTNU/PPS-BS/filehandling"
 	"github.com/CRAB-LAB-NTNU/PPS-BS/types"
 	"gonum.org/v1/plot"
 	"gonum.org/v1/plot/plotter"
@@ -57,7 +58,7 @@ func (p PpsPlotter) PlotFrame() {
 	plt.Add(archive)
 	plt.Legend.Add("Archive", archive)
 
-	if err := p.controlPath(p.framePath()); err != nil {
+	if err := filehandling.ControlPath(p.framePath()); err != nil {
 		log.Fatal(err)
 	}
 
@@ -69,7 +70,7 @@ func (p PpsPlotter) PlotFrame() {
 
 func (p PpsPlotter) ExportVideo() {
 
-	if err := p.controlPath(p.videoPath()); err != nil {
+	if err := filehandling.ControlPath(p.videoPath()); err != nil {
 		log.Fatal(err)
 	}
 
@@ -99,15 +100,6 @@ func (p PpsPlotter) videoPath() string {
 
 func (p PpsPlotter) videoFile() string {
 	return p.videoPath() + p.Cmop.Name + VideoFormat.String()
-}
-
-func (p PpsPlotter) controlPath(path string) error {
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		if innerErr := os.MkdirAll(path, 0755); innerErr != nil {
-			return innerErr
-		}
-	}
-	return nil
 }
 
 func (p PpsPlotter) individualScatter(pop []types.Individual, color color.RGBA) *plotter.Scatter {
