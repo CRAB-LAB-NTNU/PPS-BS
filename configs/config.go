@@ -24,4 +24,7 @@ type Config struct {
 	IE  ImprovedEpsilon
 	E   Epsilon
 	R2S R2S
+
+	//HV Metric
+	HVCoefficient float64
 }
