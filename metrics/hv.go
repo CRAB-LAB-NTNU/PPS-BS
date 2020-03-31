@@ -46,7 +46,6 @@ func HyperVolume(population []types.Individual, referencePoint []float64) (s flo
 	output, err := cmd.Output()
 
 	if err != nil {
-		log.Print(stderr.String())
 		s = math.NaN()
 	} else {
 		s, _ = strconv.ParseFloat(strings.TrimSpace(string(output)), 64)
