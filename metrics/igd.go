@@ -6,16 +6,14 @@ import (
 	"github.com/CRAB-LAB-NTNU/PPS-BS/types"
 )
 
-func InvertedGenerationalDistance(population []types.Individual, paretoFront [][]float64) float64 {
-	var s float64
+func InvertedGenerationalDistance(population []types.Individual, paretoFront [][]float64) (s float64) {
 	for _, solution := range paretoFront {
 		s += minDistance(population, solution)
 	}
 	return s / float64(len(paretoFront))
 }
 
-func distance(a, b []float64) float64 {
-	var s float64
+func distance(a, b []float64) (s float64) {
 	for i := range a {
 		s += math.Pow(a[i]-b[i], 2)
 	}

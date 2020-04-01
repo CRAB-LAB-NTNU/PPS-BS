@@ -13,9 +13,7 @@ type PPS struct {
 	stages                                 []types.Stage
 	stage, generation                      int
 	idealPoints, nadirPoints, paretoPoints [][]float64
-	MetricData                             []float64
 	export                                 configs.Export
-	Result                                 types.Results
 	plotter                                plotter.PpsPlotter
 }
 
@@ -40,7 +38,7 @@ func (pps *PPS) Initialise() {
 }
 
 // Run performs a run of the PPS framework
-func (pps *PPS) Run() float64 {
+func (pps *PPS) Run() []types.Individual {
 	if pps.export.ExportVideo {
 		pps.setupPlotter()
 	}
@@ -66,10 +64,6 @@ func (pps *PPS) Run() float64 {
 			pps.plotter.PlotFrame()
 		}
 
-		if pps.export.PlotEval {
-			pps.MetricData = append(pps.MetricData, pps.Performance())
-		}
-
 		pps.generation++
 	}
 	if pps.export.ExportVideo {
@@ -80,7 +74,7 @@ func (pps *PPS) Run() float64 {
 		pps.plotter.PlotMetric()
 	}
 	*/
-	return pps.Performance()
+	return pps.moea.Archive()
 }
 
 func (pps *PPS) CMOP() types.Cmop {
@@ -100,8 +94,4 @@ func (pps *PPS) MOEA() types.MOEA {
 
 func (pps PPS) Stage() string {
 	return pps.currentStage().Name()
-}
-
-func (pps PPS) Performance() float64 {
-	return pps.export.Metric(pps.moea.Archive(), pps.cmop.TrueParetoFront())
 }

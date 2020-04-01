@@ -63,7 +63,7 @@ func (pps *PPS) printData(gen int) {
 	formatted := fmt.Sprintf("%d-%02d-%02dT%02d:%02d:%02d",
 		t.Year(), t.Month(), t.Day(),
 		t.Hour(), t.Minute(), t.Second())
-	fmt.Println(formatted, ",", gen, ",", pps.Stage(), ",", pps.moea.MaxViolation(), ",", pps.moea.FeasibleRatio(), ",", pps.moea.CHM().Threshold(gen), ",", pps.Performance())
+	fmt.Println(formatted, ",", gen, ",", pps.Stage(), ",", pps.moea.MaxViolation(), ",", pps.moea.FeasibleRatio(), ",", pps.moea.CHM().Threshold(gen))
 }
 
 func (pps *PPS) setupPlotter() {
