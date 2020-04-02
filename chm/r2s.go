@@ -210,8 +210,8 @@ func (r2s R2S) Violation(t int, fitness types.Fitness) float64 {
 			continue
 		}
 
-		l := r2s.l(t, fitness.ConstraintValues[c])
-		r := r2s.r(t, fitness.ConstraintValues[c])
+		l := r2s.l(t, fitness.ConstraintTypes[c], fitness.ConstraintValues[c])
+		r := r2s.r(t, fitness.ConstraintTypes[c], fitness.ConstraintValues[c])
 
 		if l >= 0 && l <= r2s.DeltaIn[t] && r >= 0 && r <= r2s.DeltaOut[t] {
 			continue
@@ -223,10 +223,18 @@ func (r2s R2S) Violation(t int, fitness types.Fitness) float64 {
 	return math.Abs(total)
 }
 
-func (r2s R2S) l(t int, constraintViolation float64) float64 {
-	return r2s.DeltaIn[t] - math.Max(0.0, constraintViolation)
+func (r2s R2S) l(t int, constraintType types.ConstraintType, constraintViolation float64) float64 {
+	if constraintType == types.EqualsOrGreaterThanZero {
+		return r2s.DeltaIn[t] - math.Max(0.0, constraintViolation)
+	} else {
+		return r2s.DeltaIn[t] - math.Max(0.0, math.Abs(constraintViolation))
+	}
 }
 
-func (r2s R2S) r(t int, constraintViolation float64) float64 {
-	return r2s.DeltaOut[t] - math.Abs(math.Min(0.0, constraintViolation))
+func (r2s R2S) r(t int, constraintType types.ConstraintType, constraintViolation float64) float64 {
+	if constraintType == types.EqualsOrGreaterThanZero {
+		return r2s.DeltaOut[t] - math.Max(0.0, math.Abs(constraintViolation))
+	} else {
+		return r2s.DeltaOut[t] - math.Max(0.0, constraintViolation)
+	}
 }

@@ -41,3 +41,11 @@ func (c *Cmop) readParetoFrontFromFile() {
 		log.Println("Cmop:", "Error while parsing paretoFile")
 	}
 }
+
+func (ts TestSuite) SingleProblem(n int) TestSuite {
+	return TestSuite{
+		NumberOfProblems: 1,
+		Problems:         []Cmop{ts.Problems[n]},
+		Name:             ts.Name,
+	}
+}
