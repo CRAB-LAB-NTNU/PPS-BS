@@ -223,6 +223,7 @@ func (m *Moead) updateCHM() {
 	// This is because we have to check for active constraints
 	r2s, ok := m.chm.(*chm.R2S)
 	if ok {
+		//TODO: Should only be done once, as the push phase is starting.
 		m.determineActiveConstraints(r2s)
 		r2s.Update(m.generation, float64(m.fnEval))
 		m.chm = r2s
