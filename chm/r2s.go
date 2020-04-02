@@ -12,10 +12,11 @@ import (
 type R2S struct {
 	Z, ZMin float64
 	//InitialDeltaIn, InitialDeltaOut float64
-	DeltaIn, DeltaOut        []float64
-	ActiveConstraints        []bool
-	Val                      float64
-	Cs, FESc, FESmax, FESacd int
+	DeltaIn, DeltaOut           []float64
+	hasCheckedActiveConstraints bool
+	ActiveConstraints           []bool
+	Val                         float64
+	Cs, FESc, FESmax, FESacd    int
 }
 
 func NewR2S(FESc, FESacd, cs int, val, zMin float64, constraintsCount, generations int) *R2S {
@@ -167,19 +168,21 @@ func (r2s *R2S) updateZ() {
 
 //ACD check for active constraints near an assumed optimal individual
 func (r2s *R2S) ACD(iter, cfe int, fitness types.Fitness) {
-	activeConstraints := make([]bool, fitness.ConstraintCount)
-	if iter%r2s.Cs == 0 && cfe <= r2s.FESacd {
-		fmt.Println("Generation:", iter, "\tUpdating active constraints!")
-		for constraint, constraintVal := range fitness.ConstraintValues {
-			if r2s.constraintIsActive(constraintVal) {
-				activeConstraints[constraint] = true
-			}
-		}
-		r2s.ActiveConstraints = activeConstraints
-
-		fmt.Println("Constraint Vals:", fitness.ConstraintValues)
-		fmt.Println("Active Constraints: ", r2s.ActiveConstraints)
+	if r2s.hasCheckedActiveConstraints {
+		return
 	}
+	r2s.hasCheckedActiveConstraints = true
+	activeConstraints := make([]bool, fitness.ConstraintCount)
+	fmt.Println("Generation:", iter, "\tUpdating active constraints!")
+	for constraint, constraintVal := range fitness.ConstraintValues {
+		if r2s.constraintIsActive(constraintVal) {
+			activeConstraints[constraint] = true
+		}
+	}
+	r2s.ActiveConstraints = activeConstraints
+
+	fmt.Println("Constraint Vals:", fitness.ConstraintValues)
+	fmt.Println("Active Constraints: ", r2s.ActiveConstraints)
 
 }
 
