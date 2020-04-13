@@ -217,7 +217,7 @@ func (r2s R2S) Violation(t int, fitness types.Fitness) float64 {
 		r := r2s.r(t, fitness.ConstraintTypes[c], fitness.ConstraintValues[c])
 
 		if l >= 0 && l <= r2s.DeltaIn[t] && r >= 0 && r <= r2s.DeltaOut[t] {
-			continue
+			return 0
 		} else {
 			total += math.Min(math.Abs(l), math.Abs(r))
 		}
