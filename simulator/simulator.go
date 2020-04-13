@@ -129,8 +129,7 @@ func (s *Simulator) setupChm(numberOfConstraints int) types.CHM {
 			s.Config.MaxFuncEvals)
 	case types.R2S:
 		return chm.NewR2S(s.Config.R2S.FESc,
-			s.Config.R2S.FESacd,
-			s.Config.R2S.Cs,
+			s.Config.R2S.NUMacd,
 			s.Config.R2S.Val,
 			s.Config.R2S.ZMin,
 			numberOfConstraints,
