@@ -13,21 +13,20 @@ type R2S struct {
 	Z, ZMin float64
 	//InitialDeltaIn, InitialDeltaOut float64
 	DeltaIn, DeltaOut           []float64
-	hasCheckedActiveConstraints bool
+	HasCheckedActiveConstraints bool
 	ActiveConstraints           []bool
 	Val                         float64
-	Cs, FESc, FESmax, FESacd    int
+	NUMacd, FESc, FESmax        int
 }
 
-func NewR2S(FESc, FESacd, cs int, val, zMin float64, constraintsCount, generations int) *R2S {
+func NewR2S(FESc, NUMacd int, val, zMin float64, constraintsCount, generations int) *R2S {
 	return &R2S{
 		DeltaIn:           make([]float64, generations),
 		DeltaOut:          make([]float64, generations),
 		ActiveConstraints: make([]bool, constraintsCount),
 		FESmax:            generations,
 		FESc:              FESc,
-		FESacd:            FESacd,
-		Cs:                cs,
+		NUMacd:            NUMacd,
 		Val:               val,
 		ZMin:              zMin,
 	}
@@ -167,21 +166,23 @@ func (r2s *R2S) updateZ() {
 }
 
 //ACD check for active constraints near an assumed optimal individual
-func (r2s *R2S) ACD(iter, cfe int, fitness types.Fitness) {
-	if r2s.hasCheckedActiveConstraints {
+func (r2s *R2S) ACD(iter, cfe int, fitness []types.Fitness) {
+	if r2s.HasCheckedActiveConstraints {
 		return
 	}
-	r2s.hasCheckedActiveConstraints = true
-	activeConstraints := make([]bool, fitness.ConstraintCount)
+	r2s.HasCheckedActiveConstraints = true
+	activeConstraints := make([]bool, fitness[0].ConstraintCount)
 	fmt.Println("Generation:", iter, "\tUpdating active constraints!")
-	for constraint, constraintVal := range fitness.ConstraintValues {
-		if r2s.constraintIsActive(constraintVal) {
-			activeConstraints[constraint] = true
+	fmt.Println("Len fitness list:", len(fitness))
+	for _, fit := range fitness {
+		fmt.Println("Constraint Values: ", fit.ConstraintValues)
+		for constraint, constraintVal := range fit.ConstraintValues {
+			if r2s.constraintIsActive(constraintVal) {
+				activeConstraints[constraint] = true
+			}
 		}
 	}
 	r2s.ActiveConstraints = activeConstraints
-
-	fmt.Println("Constraint Vals:", fitness.ConstraintValues)
 	fmt.Println("Active Constraints: ", r2s.ActiveConstraints)
 
 }
