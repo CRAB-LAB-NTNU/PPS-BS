@@ -12,7 +12,9 @@ type metricData []float64
 func (metric metricData) size() float64 {
 	return float64(len(metric))
 }
-
+func (metric metricData) Last() float64 {
+	return metric[len(metric)-1]
+}
 func (metric metricData) Mean() float64 {
 	return arrays.Sum(metric) / metric.size()
 }
