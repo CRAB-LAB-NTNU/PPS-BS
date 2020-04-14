@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/CRAB-LAB-NTNU/PPS-BS/configs"
-	"github.com/CRAB-LAB-NTNU/PPS-BS/metrics"
 	"github.com/CRAB-LAB-NTNU/PPS-BS/simulator"
 	"github.com/CRAB-LAB-NTNU/PPS-BS/testsuites"
 	"github.com/CRAB-LAB-NTNU/PPS-BS/types"
@@ -20,14 +19,20 @@ func main() {
 	rand.Seed(time.Now().UTC().UnixNano())
 
 	config := setupConfigs()
-
+	/*
+		for cr := 0; cr <= 10; cr++ {
+			for f := 0; f <= 10; f++ {
+				config.Moead.Cr = float64(cr) / 10
+				config.Moead.F = float64(f) / 10
+			}
+		}
+	*/
 	simulator := simulator.NewSimulator(
-		testsuites.LIR2D,
-		30,
+		testsuites.LIR2D.SingleProblem(4),
+		//testsuites.CEC2020.SingleProblem(0),
+		10,
 		config)
-
 	simulator.Simulate()
-
 }
 
 func setupConfigs() configs.Config {
@@ -44,7 +49,7 @@ func setupConfigs() configs.Config {
 	}
 
 	pullconfig := configs.Pull{
-		CHM: types.ImprovedEpsilon,
+		CHM: types.R2S,
 	}
 
 	//CMOP
@@ -55,11 +60,10 @@ func setupConfigs() configs.Config {
 	//CHMs
 
 	r2sconfig := configs.R2S{
-		FESc:   300000 * 9 / 10,
-		FESacd: 100000,
-		Cs:     25,
+		FESc:   300000.0 * 9.0 / 10.0,
+		NUMacd: 10,
 		Val:    0.01,
-		ZMin:   3,
+		ZMin:   3.0,
 	}
 
 	ieconfig := configs.ImprovedEpsilon{
@@ -77,31 +81,37 @@ func setupConfigs() configs.Config {
 	//Optimizers
 
 	moeadconfig := configs.Moead{
-		CHM:                types.ImprovedEpsilon,
-		T:                  30,
-		WeightDistribution: 301,
-		DecisionVariables:  30,
+		CHM:                types.R2S,
+		T:                  10,
+		WeightDistribution: 101,
 		Nr:                 2,
-		Cr:                 1,
-		F:                  0.5,
+		Cr:                 0.7,
+		F:                  0.8,
 		DistributionIndex:  20.0,
 	}
 
 	exportconfig := configs.Export{
-		ExportVideo:     false,
+		ExportVideo:     true,
 		PlotEval:        false,
 		PrintGeneration: false,
 		VideoMax:        3,
 		VideoMin:        0,
-		Metric:          metrics.InvertedGenerationalDistance,
+	}
+
+	sweeperconfig := configs.Sweeper{
+		Sweep: true,
+		Dir:   "results/sweep/",
+		FR:    true,
+		IGD:   true,
+		HV:    true,
 	}
 
 	config := configs.Config{
-		MaxFuncEvals: 300_000,
+		MaxFuncEvals: 100_000,
 
 		Moead: moeadconfig,
 
-		Stages: []types.StageType{types.Push, types.Pull},
+		Stages: []types.StageType{types.Push /*types.BinarySearch,*/, types.Pull},
 
 		Push:   pushconfig,
 		Binary: binaryconfig,
@@ -109,14 +119,17 @@ func setupConfigs() configs.Config {
 
 		CMOP: cmopconfig,
 
-		CHM:    types.ImprovedEpsilon,
-		E:      econfig,
-		IE:     ieconfig,
-		R2S:    r2sconfig,
-		Export: exportconfig,
+		CHM:           types.R2S,
+		E:             econfig,
+		IE:            ieconfig,
+		R2S:           r2sconfig,
+		Export:        exportconfig,
+		HVCoefficient: 1.1,
+		Sweeper:       sweeperconfig,
 	}
 
 	return config
 
 }
+
 ```
