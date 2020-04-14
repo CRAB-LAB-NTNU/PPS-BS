@@ -10,8 +10,7 @@ type ImprovedEpsilon struct {
 }
 type R2S struct {
 	FESc   int
-	FESacd int
-	Cs     int
+	NUMacd int
 	Val    float64
 	ZMin   float64
 }

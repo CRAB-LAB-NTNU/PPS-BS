@@ -26,6 +26,14 @@ func Sum(arr []float64) float64 {
 	return s
 }
 
+func SumInt(arr []int) int {
+	var s int
+	for i := 0; i < len(arr); i++ {
+		s += arr[i]
+	}
+	return s
+}
+
 func EuclideanDistance(a, b []float64) float64 {
 	var s float64
 	if len(a) != len(b) {
@@ -180,6 +188,14 @@ func Zeros2DFloat64(outerLength, innerLength int) [][]float64 {
 		arr[i] = make([]float64, innerLength)
 	}
 	return arr
+}
+
+func IncreasingIntsN(n int) []int {
+	array := make([]int, n)
+	for i := 0; i < n; i++ {
+		array[i] = i
+	}
+	return array
 }
 
 func EqualInterval(length int, min, max float64) (interval [][]float64) {

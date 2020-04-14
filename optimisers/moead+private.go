@@ -223,8 +223,9 @@ func (m *Moead) updateCHM() {
 	// This is because we have to check for active constraints
 	r2s, ok := m.chm.(*chm.R2S)
 	if ok {
-		//TODO: Should only be done once, as the push phase is starting.
-		m.determineActiveConstraints(r2s)
+		if !r2s.HasCheckedActiveConstraints {
+			m.determineActiveConstraints(r2s)
+		}
 		r2s.Update(m.generation, float64(m.fnEval))
 		m.chm = r2s
 		return
@@ -237,9 +238,19 @@ func (m *Moead) updateCHM() {
 
 func (m *Moead) determineActiveConstraints(r2s *chm.R2S) {
 	rankedPopulation := biooperators.FastNonDominatedSort(m.population)
-	//TODO determine a good selection mechanism for the individual
-	randomIndex := rand.Intn(len(rankedPopulation[0]))
-	randomBest := rankedPopulation[0][randomIndex]
 
-	r2s.ACD(m.generation, m.fnEval, randomBest.Fitness())
+	randomBest := make([]types.Fitness, r2s.NUMacd)
+	numberOfBest := 0
+	for i, rank := range rankedPopulation {
+		selected := make([]int, len(rank))
+		for int(arrays.SumInt(selected)) < len(selected) && numberOfBest < r2s.NUMacd {
+			randomIndex := rand.Intn(len(rank))
+			for selected[randomIndex] == 1 {
+				randomIndex = rand.Intn(len(rank))
+			}
+			randomBest[numberOfBest] = rankedPopulation[i][randomIndex].Fitness()
+			numberOfBest++
+		}
+	}
+	r2s.ACD(m.generation, m.fnEval, randomBest)
 }
