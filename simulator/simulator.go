@@ -2,6 +2,8 @@ package simulator
 
 import (
 	"fmt"
+	"strconv"
+	"time"
 
 	"github.com/CRAB-LAB-NTNU/PPS-BS/chm"
 	"github.com/CRAB-LAB-NTNU/PPS-BS/configs"
@@ -9,6 +11,7 @@ import (
 	"github.com/CRAB-LAB-NTNU/PPS-BS/optimisers"
 	"github.com/CRAB-LAB-NTNU/PPS-BS/pps"
 	"github.com/CRAB-LAB-NTNU/PPS-BS/stages"
+	"github.com/CRAB-LAB-NTNU/PPS-BS/sweeper"
 	"github.com/CRAB-LAB-NTNU/PPS-BS/types"
 )
 
@@ -37,7 +40,8 @@ func (s *Simulator) Simulate() {
 		// Start (s.Runs) new Go routines for and send pps result to channel.
 		for r := 0; r < s.Runs; r++ {
 			go func(cmop types.Cmop, r int, channel indChan) {
-				pps := s.setupInstance(cmop)
+
+				pps := s.setupInstance(cmop, r)
 				channel <- pps.Run()
 			}(cmop, r, channel)
 		}
@@ -77,7 +81,7 @@ func (s *Simulator) printResults(p int, cmopName string, runTime time.Duration) 
 	}
 */
 
-func (s *Simulator) setupInstance(cmop types.Cmop) pps.PPS {
+func (s *Simulator) setupInstance(cmop types.Cmop, run int) pps.PPS {
 
 	var stages []types.Stage
 
@@ -89,13 +93,15 @@ func (s *Simulator) setupInstance(cmop types.Cmop) pps.PPS {
 
 	moea := s.setupMoea(cmop, chm)
 
-	pps := s.setupPps(cmop, moea, stages)
+	sweeper := s.setupSweeper(run)
+
+	pps := s.setupPps(cmop, moea, stages, sweeper)
 
 	return pps
 
 }
 
-func (s *Simulator) setupStage(pos int, numberOfObjectives int) types.Stage {
+func (s Simulator) setupStage(pos int, numberOfObjectives int) types.Stage {
 	switch s.Config.Stages[pos] {
 	case types.Push:
 		return stages.NewPush(
@@ -114,7 +120,7 @@ func (s *Simulator) setupStage(pos int, numberOfObjectives int) types.Stage {
 	panic("Error setting up stage")
 }
 
-func (s *Simulator) setupChm(numberOfConstraints int) types.CHM {
+func (s Simulator) setupChm(numberOfConstraints int) types.CHM {
 	switch s.Config.CHM {
 	case types.Epsilon:
 		return chm.NewE(
@@ -138,7 +144,7 @@ func (s *Simulator) setupChm(numberOfConstraints int) types.CHM {
 	panic("Error setting up CHM")
 }
 
-func (s *Simulator) setupMoea(cmop types.Cmop, chm types.CHM) types.MOEA {
+func (s Simulator) setupMoea(cmop types.Cmop, chm types.CHM) types.MOEA {
 	return optimisers.NewMoead(
 		cmop, chm,
 		s.Config.Moead.T,
@@ -152,10 +158,26 @@ func (s *Simulator) setupMoea(cmop types.Cmop, chm types.CHM) types.MOEA {
 	)
 }
 
-func (s *Simulator) setupPps(cmop types.Cmop, moea types.MOEA, stages []types.Stage) pps.PPS {
+func (s Simulator) setupSweeper(run int) sweeper.Sweeper {
+	dir := s.Config.Sweeper.Dir + time.Now().Format(time.Stamp) + "/" + s.TestSuite.Name + "/" + strconv.Itoa(s.Config.CMOP.Problem) + "/"
+	var name string
+	nameparts := []string{"FR-", "IGD-", "HV-"}
+	trackValues := []bool{s.Config.Sweeper.FR, s.Config.Sweeper.IGD, s.Config.Sweeper.HV}
+	for pos, track := range trackValues {
+		if track {
+			name += nameparts[pos]
+		}
+	}
+	name += strconv.Itoa(run)
+	return sweeper.NewSweeper(s.Config.Sweeper.Sweep, dir, name, s.Config.Sweeper.FR, s.Config.Sweeper.IGD, s.Config.Sweeper.HV)
+}
+
+func (s *Simulator) setupPps(cmop types.Cmop, moea types.MOEA, stages []types.Stage, sweeper sweeper.Sweeper) pps.PPS {
 	return pps.NewPPS(
 		cmop,
 		moea,
 		stages,
+		sweeper,
+		s.Config.HVCoefficient,
 		s.Config.Export)
 }
