@@ -61,7 +61,7 @@ func OpenFile(dir, name string) *os.File {
 	return nil
 }
 
-func WriteLine(values []float64, file os.File) {
+func WriteLine(values []interface{}, file os.File) {
 	var line string
 	for _, value := range values {
 		line += fmt.Sprint(value) + " "

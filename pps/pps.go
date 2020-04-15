@@ -75,8 +75,11 @@ func (pps *PPS) Run() []types.Individual {
 		if pps.sweeper.Sweep() {
 			pps.results.Add(pps.moea.Population())
 
-			var values []float64
-			values = append(values, float64(pps.generation))
+			var values []interface{}
+			values = append(values, pps.generation)
+			if pps.sweeper.Phase() {
+				values = append(values, pps.stages[pps.stage].Name())
+			}
 			if pps.sweeper.FR() {
 				values = append(values, pps.results.FeasibilityRate())
 			}
@@ -86,7 +89,6 @@ func (pps *PPS) Run() []types.Individual {
 			if pps.sweeper.HV() {
 				values = append(values, pps.results.HV.Last())
 			}
-
 			pps.sweeper.WriteLine(values)
 		}
 

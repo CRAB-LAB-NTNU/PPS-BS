@@ -161,15 +161,15 @@ func (s Simulator) setupMoea(cmop types.Cmop, chm types.CHM) types.MOEA {
 func (s Simulator) setupSweeper(run int) sweeper.Sweeper {
 	dir := s.Config.Sweeper.Dir + time.Now().Format(time.Stamp) + "/" + s.TestSuite.Name + "/" + strconv.Itoa(s.Config.CMOP.Problem) + "/"
 	var name string
-	nameparts := []string{"FR-", "IGD-", "HV-"}
-	trackValues := []bool{s.Config.Sweeper.FR, s.Config.Sweeper.IGD, s.Config.Sweeper.HV}
+	nameparts := []string{"Phase-", "FR-", "IGD-", "HV-"}
+	trackValues := []bool{s.Config.Sweeper.Phase, s.Config.Sweeper.FR, s.Config.Sweeper.IGD, s.Config.Sweeper.HV}
 	for pos, track := range trackValues {
 		if track {
 			name += nameparts[pos]
 		}
 	}
 	name += strconv.Itoa(run)
-	return sweeper.NewSweeper(s.Config.Sweeper.Sweep, dir, name, s.Config.Sweeper.FR, s.Config.Sweeper.IGD, s.Config.Sweeper.HV)
+	return sweeper.NewSweeper(s.Config.Sweeper.Sweep, dir, name, s.Config.Sweeper.Phase, s.Config.Sweeper.FR, s.Config.Sweeper.IGD, s.Config.Sweeper.HV)
 }
 
 func (s *Simulator) setupPps(cmop types.Cmop, moea types.MOEA, stages []types.Stage, sweeper sweeper.Sweeper) pps.PPS {
