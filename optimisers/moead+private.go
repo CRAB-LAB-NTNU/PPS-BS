@@ -1,7 +1,6 @@
 package optimisers
 
 import (
-	"fmt"
 	"math"
 	"math/rand"
 
@@ -150,7 +149,7 @@ func (m *Moead) evolveBinary(stage types.Stage) {
 		panic("Could not assert binary stage")
 	}
 	if m.skipBinary() {
-		fmt.Println("No feasible individuals in the archive - Skipping binary search")
+		//fmt.Println("No feasible individuals in the archive - Skipping binary search")
 		stage.SetOver()
 	} else {
 		if !m.hasBinaryPairs() {
@@ -203,7 +202,7 @@ func (m *Moead) boundarySearch(binary *stages.Binary) {
 	}
 	if missCounter <= m.historyCounter && missCounter > 0 {
 		m.population = selectBinaryResult(m.archiveCopy, m.population, m.populationSize, binary.Fcp())
-		fmt.Println("Setting binary stage over")
+		//fmt.Println("Setting binary stage over")
 		binary.SetOver()
 		m.maxViolation = -1
 		for _, p := range m.population {

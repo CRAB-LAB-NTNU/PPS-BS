@@ -27,4 +27,7 @@ type Config struct {
 
 	//HV Metric
 	HVCoefficient float64
+
+	//Sweeper
+	Sweeper Sweeper
 }

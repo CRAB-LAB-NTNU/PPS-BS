@@ -1,6 +1,7 @@
 package filehandling
 
 import (
+	"fmt"
 	"log"
 	"os"
 )
@@ -29,6 +30,7 @@ func WriteArrayToFile(individuals []types.Individual, destination string) {
 	}
 }
 */
+
 func checkError(message string, err error) {
 	if err != nil {
 		log.Fatal(message, err)
@@ -42,4 +44,36 @@ func ControlPath(path string) error {
 		}
 	}
 	return nil
+}
+
+func OpenFile(dir, name string) *os.File {
+
+	err := ControlPath(dir)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if file, err := os.Create(dir + name); err == nil {
+		return file
+	}
+	log.Fatal("Couldn't create file: ", name)
+
+	return nil
+}
+
+func WriteLine(values []interface{}, file os.File) {
+	var line string
+	for _, value := range values {
+		line += fmt.Sprint(value) + " "
+	}
+	if _, err := file.WriteString(line + "\n"); err != nil {
+		log.Fatal("Couldn't write ", line, " to file ", file.Name())
+	}
+}
+
+func RemoveFile(dir, name string) {
+	err := os.Remove(dir + name)
+	if err != nil {
+		log.Fatal("Couldn't remove file", name)
+	}
 }

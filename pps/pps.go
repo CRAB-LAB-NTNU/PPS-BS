@@ -2,7 +2,9 @@ package pps
 
 import (
 	"github.com/CRAB-LAB-NTNU/PPS-BS/configs"
+	"github.com/CRAB-LAB-NTNU/PPS-BS/metrics"
 	"github.com/CRAB-LAB-NTNU/PPS-BS/plotter"
+	"github.com/CRAB-LAB-NTNU/PPS-BS/sweeper"
 	"github.com/CRAB-LAB-NTNU/PPS-BS/types"
 )
 
@@ -15,14 +17,19 @@ type PPS struct {
 	idealPoints, nadirPoints, paretoPoints [][]float64
 	export                                 configs.Export
 	plotter                                plotter.PpsPlotter
+	sweeper                                sweeper.Sweeper
+	results                                metrics.Results
+	HVCoefficient                          float64
 }
 
-func NewPPS(cmop types.Cmop, moea types.MOEA, stages []types.Stage, export configs.Export) PPS {
+func NewPPS(cmop types.Cmop, moea types.MOEA, stages []types.Stage, sweeper sweeper.Sweeper, hvCoefficient float64, export configs.Export) PPS {
 	pps := PPS{
-		cmop:   cmop,
-		moea:   moea,
-		stages: stages,
-		export: export,
+		cmop:          cmop,
+		moea:          moea,
+		stages:        stages,
+		sweeper:       sweeper,
+		HVCoefficient: hvCoefficient,
+		export:        export,
 	}
 
 	pps.Initialise()
@@ -42,6 +49,13 @@ func (pps *PPS) Run() []types.Individual {
 	if pps.export.ExportVideo {
 		pps.setupPlotter()
 	}
+	if pps.sweeper.Sweep() {
+		pps.results = metrics.Results{
+			ParetoFront:          pps.cmop.TrueParetoFront(),
+			HyperVolumeReference: metrics.HVReferenceNadirTimes(pps.HVCoefficient, pps.cmop),
+		}
+	}
+
 	for pps.moea.FunctionEvaluations() < pps.moea.MaxFuncEvals() {
 
 		pps.setIdealAndNadir()
@@ -56,6 +70,26 @@ func (pps *PPS) Run() []types.Individual {
 
 		if pps.export.PrintGeneration {
 			pps.printData(pps.generation)
+		}
+
+		if pps.sweeper.Sweep() {
+			pps.results.Add(pps.moea.Population())
+
+			var values []interface{}
+			values = append(values, pps.generation)
+			if pps.sweeper.Phase() {
+				values = append(values, pps.stages[pps.stage].Name())
+			}
+			if pps.sweeper.FR() {
+				values = append(values, pps.moea.FeasibleRatio())
+			}
+			if pps.sweeper.IGD() {
+				values = append(values, pps.results.IGD.Last())
+			}
+			if pps.sweeper.HV() {
+				values = append(values, pps.results.HV.Last())
+			}
+			pps.sweeper.WriteLine(values)
 		}
 
 		if pps.export.ExportVideo {
@@ -94,4 +128,8 @@ func (pps *PPS) MOEA() types.MOEA {
 
 func (pps PPS) Stage() string {
 	return pps.currentStage().Name()
+}
+
+func (pps PPS) Sweeper() sweeper.Sweeper {
+	return pps.sweeper
 }

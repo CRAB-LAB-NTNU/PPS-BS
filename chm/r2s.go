@@ -1,7 +1,6 @@
 package chm
 
 import (
-	"fmt"
 	"math"
 
 	"github.com/CRAB-LAB-NTNU/PPS-BS/biooperators"
@@ -69,7 +68,7 @@ func (r2s *R2S) Initialise(generations int, feasibleRatio float64, population []
 // InitializeDeltaIn is used to initialize deltaIn to the input parameter passed to the method
 func (r2s *R2S) initializeDeltaIn(initialDeltaIn float64) {
 	//TODO: See how what effect changing to calculate the max constraint violation of all minimum constraint violations has
-	fmt.Println("DeltaIn[0]: ", initialDeltaIn)
+	//fmt.Println("DeltaIn[0]: ", initialDeltaIn)
 	r2s.DeltaIn[0] = initialDeltaIn
 }
 
@@ -104,7 +103,7 @@ func (r2s *R2S) initializeDeltaOut(feasibleRatio float64, population []types.Ind
 	} else {
 		r2s.DeltaOut[0] = 1
 	}
-	fmt.Println("DeltaOut[0]: ", r2s.DeltaOut[0])
+	//fmt.Println("DeltaOut[0]: ", r2s.DeltaOut[0])
 
 }
 
@@ -172,10 +171,10 @@ func (r2s *R2S) ACD(iter, cfe int, fitness []types.Fitness) {
 	}
 	r2s.HasCheckedActiveConstraints = true
 	activeConstraints := make([]bool, fitness[0].ConstraintCount)
-	fmt.Println("Generation:", iter, "\tUpdating active constraints!")
-	fmt.Println("Len fitness list:", len(fitness))
+	//fmt.Println("Generation:", iter, "\tUpdating active constraints!")
+	//fmt.Println("Len fitness list:", len(fitness))
 	for _, fit := range fitness {
-		fmt.Println("Constraint Values: ", fit.ConstraintValues)
+		//fmt.Println("Constraint Values: ", fit.ConstraintValues)
 		for constraint, constraintVal := range fit.ConstraintValues {
 			if r2s.constraintIsActive(constraintVal) {
 				activeConstraints[constraint] = true
@@ -183,7 +182,7 @@ func (r2s *R2S) ACD(iter, cfe int, fitness []types.Fitness) {
 		}
 	}
 	r2s.ActiveConstraints = activeConstraints
-	fmt.Println("Active Constraints: ", r2s.ActiveConstraints)
+	//fmt.Println("Active Constraints: ", r2s.ActiveConstraints)
 
 }
 
@@ -201,6 +200,7 @@ func (r2s R2S) HasActiveConstraints() bool {
 	return false
 }
 
+//Violation returns the constraint violation of an individual
 func (r2s R2S) Violation(t int, fitness types.Fitness) float64 {
 	var total float64
 
@@ -219,9 +219,8 @@ func (r2s R2S) Violation(t int, fitness types.Fitness) float64 {
 
 		if l >= 0 && l <= r2s.DeltaIn[t] && r >= 0 && r <= r2s.DeltaOut[t] {
 			return 0
-		} else {
-			total += math.Min(math.Abs(l), math.Abs(r))
 		}
+		total += math.Min(math.Abs(l), math.Abs(r))
 
 	}
 	return math.Abs(total)
@@ -230,15 +229,13 @@ func (r2s R2S) Violation(t int, fitness types.Fitness) float64 {
 func (r2s R2S) l(t int, constraintType types.ConstraintType, constraintViolation float64) float64 {
 	if constraintType == types.EqualsOrGreaterThanZero {
 		return r2s.DeltaIn[t] - math.Max(0.0, constraintViolation)
-	} else {
-		return r2s.DeltaIn[t] - math.Max(0.0, math.Abs(constraintViolation))
 	}
+	return r2s.DeltaIn[t] - math.Max(0.0, math.Abs(constraintViolation))
 }
 
 func (r2s R2S) r(t int, constraintType types.ConstraintType, constraintViolation float64) float64 {
 	if constraintType == types.EqualsOrGreaterThanZero {
 		return r2s.DeltaOut[t] - math.Max(0.0, math.Abs(constraintViolation))
-	} else {
-		return r2s.DeltaOut[t] - math.Max(0.0, constraintViolation)
 	}
+	return r2s.DeltaOut[t] - math.Max(0.0, constraintViolation)
 }
