@@ -81,7 +81,7 @@ func (pps *PPS) Run() []types.Individual {
 				values = append(values, pps.stages[pps.stage].Name())
 			}
 			if pps.sweeper.FR() {
-				values = append(values, pps.results.FeasibilityRate())
+				values = append(values, pps.moea.FeasibleRatio())
 			}
 			if pps.sweeper.IGD() {
 				values = append(values, pps.results.IGD.Last())
