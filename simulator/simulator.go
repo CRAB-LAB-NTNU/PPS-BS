@@ -3,7 +3,6 @@ package simulator
 import (
 	"fmt"
 	"strconv"
-	"time"
 
 	"github.com/CRAB-LAB-NTNU/PPS-BS/chm"
 	"github.com/CRAB-LAB-NTNU/PPS-BS/configs"
@@ -33,7 +32,6 @@ func NewSimulator(testSuite types.TestSuite, runs int, config configs.Config) Si
 }
 
 func (s *Simulator) Simulate() {
-	timeStamp := time.Now().Format(time.Stamp)
 	for _, cmop := range s.TestSuite.Problems {
 		type indChan chan []types.Individual
 		channel := make(indChan)
@@ -44,7 +42,7 @@ func (s *Simulator) Simulate() {
 
 				pps := s.setupInstance(cmop, timeStamp, r)
 				channel <- pps.Run()
-			}(cmop, timeStamp, r, channel)
+			}(cmop, s.Config.TimeStamp, r, channel)
 		}
 
 		// Create result struct, then move all items from channel to result.
@@ -94,7 +92,10 @@ func (s *Simulator) setupInstance(cmop types.Cmop, timeStamp string, run int) pp
 
 	moea := s.setupMoea(cmop, chm)
 
-	sweeper := s.setupSweeper(cmop, timeStamp, run)
+	var sweeper sweeper.Sweeper
+	if s.Config.Sweeper.Sweep {
+		sweeper = s.setupSweeper(cmop, timeStamp, run)
+	}
 
 	pps := s.setupPps(cmop, moea, stages, sweeper)
 
