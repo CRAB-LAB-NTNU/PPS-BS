@@ -33,17 +33,18 @@ func NewSimulator(testSuite types.TestSuite, runs int, config configs.Config) Si
 }
 
 func (s *Simulator) Simulate() {
+	timeStamp := time.Now().Format(time.Stamp)
 	for _, cmop := range s.TestSuite.Problems {
 		type indChan chan []types.Individual
 		channel := make(indChan)
 
 		// Start (s.Runs) new Go routines for and send pps result to channel.
 		for r := 0; r < s.Runs; r++ {
-			go func(cmop types.Cmop, r int, channel indChan) {
+			go func(cmop types.Cmop, timeStamp string, r int, channel indChan) {
 
-				pps := s.setupInstance(cmop, r)
+				pps := s.setupInstance(cmop, timeStamp, r)
 				channel <- pps.Run()
-			}(cmop, r, channel)
+			}(cmop, timeStamp, r, channel)
 		}
 
 		// Create result struct, then move all items from channel to result.
@@ -62,7 +63,7 @@ func (s *Simulator) Simulate() {
 
 func (s *Simulator) printSweep() {
 	for i, r := range s.results {
-		fmt.Println(s.TestSuite.Problems[i].Name, s.Config.Moead.Cr, s.Config.Moead.F, r.FeasibilityRate(), r.IGD.Mean(), r.HV.Mean())
+		fmt.Println(s.TestSuite.Problems[i].Name, r.FeasibilityRate(), r.IGD.Mean(), r.HV.Mean())
 	}
 }
 
@@ -81,7 +82,7 @@ func (s *Simulator) printResults(p int, cmopName string, runTime time.Duration) 
 	}
 */
 
-func (s *Simulator) setupInstance(cmop types.Cmop, run int) pps.PPS {
+func (s *Simulator) setupInstance(cmop types.Cmop, timeStamp string, run int) pps.PPS {
 
 	var stages []types.Stage
 
@@ -93,7 +94,7 @@ func (s *Simulator) setupInstance(cmop types.Cmop, run int) pps.PPS {
 
 	moea := s.setupMoea(cmop, chm)
 
-	sweeper := s.setupSweeper(run)
+	sweeper := s.setupSweeper(cmop, timeStamp, run)
 
 	pps := s.setupPps(cmop, moea, stages, sweeper)
 
@@ -158,8 +159,8 @@ func (s Simulator) setupMoea(cmop types.Cmop, chm types.CHM) types.MOEA {
 	)
 }
 
-func (s Simulator) setupSweeper(run int) sweeper.Sweeper {
-	dir := s.Config.Sweeper.Dir + time.Now().Format(time.Stamp) + "/" + s.TestSuite.Name + "/" + strconv.Itoa(s.Config.CMOP.Problem) + "/"
+func (s Simulator) setupSweeper(cmop types.Cmop, timeStamp string, run int) sweeper.Sweeper {
+	dir := s.Config.Sweeper.Dir + timeStamp + "/" + s.TestSuite.Name + "/" + cmop.Name + "/"
 	var name string
 	nameparts := []string{"Phase-", "FR-", "IGD-", "HV-"}
 	trackValues := []bool{s.Config.Sweeper.Phase, s.Config.Sweeper.FR, s.Config.Sweeper.IGD, s.Config.Sweeper.HV}
