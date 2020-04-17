@@ -94,7 +94,10 @@ func (s *Simulator) setupInstance(cmop types.Cmop, timeStamp string, run int) pp
 
 	moea := s.setupMoea(cmop, chm)
 
-	sweeper := s.setupSweeper(cmop, timeStamp, run)
+	var sweeper sweeper.Sweeper
+	if s.Config.Sweeper.Sweep {
+		sweeper = s.setupSweeper(cmop, timeStamp, run)
+	}
 
 	pps := s.setupPps(cmop, moea, stages, sweeper)
 
