@@ -51,13 +51,3 @@ func (r *Results) Add(archive []types.Individual) {
 func (r Results) FeasibilityRate() float64 {
 	return r.IGD.size() / float64(len(r.archives))
 }
-
-// Nå skal jeg ut på eventyr
-// For jeg har hengt med Lars
-// Og smitte noen rare dyr
-// For Lars har gitt meg SARS
-// Reiser over land og strand
-// Ut på evig jakt
-// Gi corona, se det går an
-// Å bruke dennes makt
-// LARS HAR SARS
