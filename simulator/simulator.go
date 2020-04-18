@@ -62,7 +62,7 @@ func (s *Simulator) Simulate() {
 
 func (s *Simulator) printSweep() {
 	for i, r := range s.results {
-		fmt.Println(s.TestSuite.Problems[i].Name, s.Config.Moead.Cr, s.Config.Moead.F, r.FeasibilityRate(), r.IGD.Mean(), r.HV.Mean())
+		fmt.Println(s.TestSuite.Problems[i].Name, s.Config.R2S.NUMacd, s.Config.R2S.Val, r.FeasibilityRate(), r.IGD.Mean(), r.HV.Mean())
 	}
 }
 
@@ -93,8 +93,11 @@ func (s *Simulator) setupInstance(cmop types.Cmop, run int) pps.PPS {
 
 	moea := s.setupMoea(cmop, chm)
 
-	sweeper := s.setupSweeper(run)
+	var sweeper sweeper.Sweeper
+	if s.Config.Sweeper.Sweep {
+		sweeper = s.setupSweeper(run)
 
+	}
 	pps := s.setupPps(cmop, moea, stages, sweeper)
 
 	return pps
@@ -137,7 +140,7 @@ func (s Simulator) setupChm(numberOfConstraints int) types.CHM {
 		return chm.NewR2S(s.Config.R2S.FESc,
 			s.Config.R2S.NUMacd,
 			s.Config.R2S.Val,
-			s.Config.R2S.ZMin,
+			s.Config.R2S.Z,
 			numberOfConstraints,
 			s.Config.MaxFuncEvals)
 	}
