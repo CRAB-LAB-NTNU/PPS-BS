@@ -1,6 +1,7 @@
 package optimisers
 
 import (
+	"fmt"
 	"math"
 	"math/rand"
 
@@ -224,6 +225,10 @@ func (m *Moead) updateCHM() {
 	if ok {
 		if !r2s.HasCheckedActiveConstraints {
 			m.determineActiveConstraints(r2s)
+			if r2s.HasActiveConstraints() {
+				// Used for parameter sweep to se if active constraints were found or not.
+				fmt.Print("1 ")
+			}
 		}
 		r2s.Update(m.generation, float64(m.fnEval))
 		m.chm = r2s
