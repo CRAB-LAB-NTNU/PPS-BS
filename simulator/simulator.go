@@ -61,8 +61,9 @@ func (s *Simulator) Simulate() {
 }
 
 func (s *Simulator) printSweep() {
+	fmt.Println()
 	for i, r := range s.results {
-		fmt.Println(s.TestSuite.Problems[i].Name, s.Config.R2S.NUMacd, s.Config.R2S.Val, r.FeasibilityRate(), r.IGD.Mean(), r.HV.Mean())
+		fmt.Println(s.TestSuite.Problems[i].Name, s.Config.R2S.NUMacd, s.Config.R2S.Val, s.Config.R2S.Z, r.FeasibilityRate(), r.IGD.Mean(), r.HV.Mean())
 	}
 }
 
