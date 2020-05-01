@@ -82,7 +82,7 @@ func FastNonDominatedSort(population []types.Individual) [][]types.Individual {
 			}
 		}
 		i++
-		if len(fronts) == i {
+		if i == len(fronts) {
 			break
 		}
 		fronts[i] = H
