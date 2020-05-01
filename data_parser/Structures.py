@@ -51,6 +51,22 @@ class Run(InnerList):
     def hyper_volume(self):
         return [generation.hyper_volume for generation in self]
 
+    def binary_count(self):
+        return self.phase_count("Binary")
+
+    def push_count(self):
+        return self.phase_count("Push")
+
+    def pull_count(self):
+        return self.phase_count("Pull")
+
+    def phase_count(self, phase):
+        count = 0
+        for generation in self:
+            if generation.phase == phase:
+                count += 1
+        return count
+
     def __str__(self):
         return str(self.run)
 
@@ -78,6 +94,15 @@ class Problem(InnerList):
 
     def feasibility_ratio(self):
         return [self.mean_feasibility_ratio(i) for i in range(self[0].size())]    
+
+    def binary_count(self):
+        return sum([ run.binary_count() for run in self]) / self.size()
+
+    def pull_count(self):
+        return sum([run.pull_count() for run in self]) / self.size()
+
+    def push_count(self):
+        return sum([run.push_count() for run in self]) / self.size()
 
     def __str__(self):
         return self.name
