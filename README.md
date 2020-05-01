@@ -19,20 +19,20 @@ func main() {
 	rand.Seed(time.Now().UTC().UnixNano())
 
 	config := setupConfigs()
-	/*
-		for cr := 0; cr <= 10; cr++ {
-			for f := 0; f <= 10; f++ {
-				config.Moead.Cr = float64(cr) / 10
-				config.Moead.F = float64(f) / 10
-			}
-		}
-	*/
-	simulator := simulator.NewSimulator(
-		testsuites.LIR2D.SingleProblem(4),
-		//testsuites.CEC2020.SingleProblem(0),
-		10,
-		config)
-	simulator.Simulate()
+
+	sim := simulator.NewSimulator(testsuites.LIR2D, 30, config)
+	sim.Simulate()
+
+	config.Moead.WeightDistribution = 23
+	sim = simulator.NewSimulator(testsuites.LIR3D, 30, config)
+	sim.Simulate()
+
+	config.Moead.WeightDistribution = 101
+	config.MaxFuncEvals = 100_000
+	config.Moead.Cr = 0.9
+	config.Moead.F = 1.0
+	sim = simulator.NewSimulator(testsuites.CEC2020, 30, config)
+	sim.Simulate()
 }
 
 func setupConfigs() configs.Config {
@@ -44,12 +44,12 @@ func setupConfigs() configs.Config {
 	}
 
 	binaryconfig := configs.Binary{
-		MinDistance: 0.05,
-		Fcp:         0.5,
+		MinDistance: 0.03,
+		Fcp:         0.1,
 	}
 
 	pullconfig := configs.Pull{
-		CHM: types.R2S,
+		CHM: types.Epsilon,
 	}
 
 	//CMOP
@@ -81,17 +81,17 @@ func setupConfigs() configs.Config {
 	//Optimizers
 
 	moeadconfig := configs.Moead{
-		CHM:                types.R2S,
-		T:                  10,
-		WeightDistribution: 101,
+		CHM:                types.Epsilon,
+		T:                  30,
+		WeightDistribution: 301,
 		Nr:                 2,
-		Cr:                 0.7,
-		F:                  0.8,
+		Cr:                 1.0,
+		F:                  0.5,
 		DistributionIndex:  20.0,
 	}
 
 	exportconfig := configs.Export{
-		ExportVideo:     true,
+		ExportVideo:     false,
 		PlotEval:        false,
 		PrintGeneration: false,
 		VideoMax:        3,
@@ -104,14 +104,15 @@ func setupConfigs() configs.Config {
 		FR:    true,
 		IGD:   true,
 		HV:    true,
+		Phase: true,
 	}
 
 	config := configs.Config{
-		MaxFuncEvals: 100_000,
+		MaxFuncEvals: 300_000,
 
 		Moead: moeadconfig,
 
-		Stages: []types.StageType{types.Push /*types.BinarySearch,*/, types.Pull},
+		Stages: []types.StageType{types.Push, types.Pull},
 
 		Push:   pushconfig,
 		Binary: binaryconfig,
@@ -119,13 +120,14 @@ func setupConfigs() configs.Config {
 
 		CMOP: cmopconfig,
 
-		CHM:           types.R2S,
+		CHM:           types.Epsilon,
 		E:             econfig,
 		IE:            ieconfig,
 		R2S:           r2sconfig,
 		Export:        exportconfig,
 		HVCoefficient: 1.1,
 		Sweeper:       sweeperconfig,
+		TimeStamp:     time.Now().Format(time.Stamp),
 	}
 
 	return config

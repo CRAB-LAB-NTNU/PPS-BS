@@ -30,4 +30,7 @@ type Config struct {
 
 	//Sweeper
 	Sweeper Sweeper
+
+	//TimeStamp
+	TimeStamp string
 }

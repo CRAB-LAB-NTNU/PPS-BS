@@ -23,3 +23,4 @@ graphics*
 results/
 results.copy/
 .tmp/
+__pycache__/
