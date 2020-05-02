@@ -9,7 +9,7 @@ import (
 
 // R2S struct defines the parameters needed by r2s and the methods available
 type R2S struct {
-	Z, ZMin float64
+	Z float64
 	//InitialDeltaIn, InitialDeltaOut float64
 	DeltaIn, DeltaOut           []float64
 	HasCheckedActiveConstraints bool
@@ -18,16 +18,17 @@ type R2S struct {
 	NUMacd, FESc, FESmax        int
 }
 
-func NewR2S(FESc, NUMacd int, val, zMin float64, constraintsCount, generations int) *R2S {
+func NewR2S(FESc, NUMacd int, val, z float64, constraintsCount, generations int) *R2S {
 	return &R2S{
-		DeltaIn:           make([]float64, generations),
-		DeltaOut:          make([]float64, generations),
-		ActiveConstraints: make([]bool, constraintsCount),
-		FESmax:            generations,
-		FESc:              FESc,
-		NUMacd:            NUMacd,
-		Val:               val,
-		ZMin:              zMin,
+		DeltaIn:                     make([]float64, generations),
+		DeltaOut:                    make([]float64, generations),
+		ActiveConstraints:           make([]bool, constraintsCount),
+		HasCheckedActiveConstraints: false,
+		FESmax:                      generations,
+		FESc:                        FESc,
+		NUMacd:                      NUMacd,
+		Val:                         val,
+		Z:                           z,
 	}
 }
 
@@ -45,29 +46,10 @@ func (r2s *R2S) Initialise(t int, maxviolation float64) {
 	r2s.DeltaIn[t] = maxviolation
 	r2s.DeltaOut[0] = maxviolation
 	r2s.DeltaOut[t] = maxviolation
-
-	r2s.initializeZ()
-
 }
-
-/*
-func (r2s *R2S) Initialise(generations int, feasibleRatio float64, population []types.Individual) {
-	fmt.Println("Initialising R2S")
-	r2s.DeltaIn, r2s.DeltaOut = make([]float64, generations), make([]float64, generations)
-	r2s.ActiveConstraints = make([]bool, population[0].Fitness().ConstraintCount)
-	//TODO Set at parameter in a better way
-	//TODO At the end of push phase set these using the population instead
-	r2s.initializeDeltaIn(2)
-	r2s.initializeDeltaOut(feasibleRatio, population)
-	r2s.initializeZ()
-	r2s.updateZ()
-
-}
-*/
 
 // InitializeDeltaIn is used to initialize deltaIn to the input parameter passed to the method
 func (r2s *R2S) initializeDeltaIn(initialDeltaIn float64) {
-	//TODO: See how what effect changing to calculate the max constraint violation of all minimum constraint violations has
 	//fmt.Println("DeltaIn[0]: ", initialDeltaIn)
 	r2s.DeltaIn[0] = initialDeltaIn
 }
@@ -149,21 +131,6 @@ func (r2s *R2S) updateDeltaOut(t int, cfe int) {
 
 }
 
-// InitializeZ initialises Z based on the initial deltaout value
-func (r2s *R2S) initializeZ() {
-
-	numerator := -5 - math.Log(r2s.DeltaOut[0])
-	denominator := math.Log(0.05)
-
-	r2s.Z = numerator / denominator
-}
-
-// UpdateZ Updates Z using the Zmin value and the current Z value
-func (r2s *R2S) updateZ() {
-	//r2s.Z = math.Max(r2s.Z, r2s.ZMin)
-	r2s.Z = 0.3*r2s.Z + 0.7*r2s.ZMin
-}
-
 //ACD check for active constraints near an assumed optimal individual
 func (r2s *R2S) ACD(iter, cfe int, fitness []types.Fitness) {
 	if r2s.HasCheckedActiveConstraints {
@@ -174,7 +141,7 @@ func (r2s *R2S) ACD(iter, cfe int, fitness []types.Fitness) {
 	//fmt.Println("Generation:", iter, "\tUpdating active constraints!")
 	//fmt.Println("Len fitness list:", len(fitness))
 	for _, fit := range fitness {
-		//fmt.Println("Constraint Values: ", fit.ConstraintValues)
+		//	fmt.Println("Constraint Values: ", fit.ConstraintValues)
 		for constraint, constraintVal := range fit.ConstraintValues {
 			if r2s.constraintIsActive(constraintVal) {
 				activeConstraints[constraint] = true
@@ -218,6 +185,7 @@ func (r2s R2S) Violation(t int, fitness types.Fitness) float64 {
 		r := r2s.r(t, fitness.ConstraintTypes[c], fitness.ConstraintValues[c])
 
 		if l >= 0 && l <= r2s.DeltaIn[t] && r >= 0 && r <= r2s.DeltaOut[t] {
+			//fmt.Println("individual is inside boundary")
 			return 0
 		}
 		total += math.Min(math.Abs(l), math.Abs(r))
@@ -230,12 +198,12 @@ func (r2s R2S) l(t int, constraintType types.ConstraintType, constraintViolation
 	if constraintType == types.EqualsOrGreaterThanZero {
 		return r2s.DeltaIn[t] - math.Max(0.0, constraintViolation)
 	}
-	return r2s.DeltaIn[t] - math.Max(0.0, math.Abs(constraintViolation))
+	return r2s.DeltaIn[t] - math.Abs(math.Min(0.0, constraintViolation))
 }
 
 func (r2s R2S) r(t int, constraintType types.ConstraintType, constraintViolation float64) float64 {
 	if constraintType == types.EqualsOrGreaterThanZero {
-		return r2s.DeltaOut[t] - math.Max(0.0, math.Abs(constraintViolation))
+		return r2s.DeltaOut[t] - math.Abs(math.Min(0.0, constraintViolation))
 	}
 	return r2s.DeltaOut[t] - math.Max(0.0, constraintViolation)
 }

@@ -60,6 +60,7 @@ func (s *Simulator) Simulate() {
 }
 
 func (s *Simulator) printSweep() {
+	fmt.Println()
 	for i, r := range s.results {
 		fmt.Println(s.TestSuite.Problems[i].Name, r.FeasibilityRate(), r.IGD.Mean(), r.HV.Mean())
 	}
@@ -139,7 +140,7 @@ func (s Simulator) setupChm(numberOfConstraints int) types.CHM {
 		return chm.NewR2S(s.Config.R2S.FESc,
 			s.Config.R2S.NUMacd,
 			s.Config.R2S.Val,
-			s.Config.R2S.ZMin,
+			s.Config.R2S.Z,
 			numberOfConstraints,
 			s.Config.MaxFuncEvals)
 	}
