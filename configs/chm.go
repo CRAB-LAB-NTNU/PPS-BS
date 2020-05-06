@@ -12,5 +12,5 @@ type R2S struct {
 	FESc   int
 	NUMacd int
 	Val    float64
-	ZMin   float64
+	Z      float64
 }

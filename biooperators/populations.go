@@ -50,7 +50,6 @@ func CalculateNadirAndIdealPoints(population []types.Individual) ([]float64, []f
 }
 
 func FastNonDominatedSort(population []types.Individual) [][]types.Individual {
-
 	fronts := make([][]types.Individual, len(population))
 	sets := make([][]types.Individual, len(population))
 	n := make([]int, len(population))
@@ -83,6 +82,9 @@ func FastNonDominatedSort(population []types.Individual) [][]types.Individual {
 			}
 		}
 		i++
+		if i == len(fronts) {
+			break
+		}
 		fronts[i] = H
 	}
 	for j := len(fronts) - 1; j >= 0; j-- {
