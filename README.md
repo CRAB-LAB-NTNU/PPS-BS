@@ -19,19 +19,14 @@ func main() {
 	rand.Seed(time.Now().UTC().UnixNano())
 
 	config := setupConfigs()
-
-	sim := simulator.NewSimulator(testsuites.LIR2D, 30, config)
-	sim.Simulate()
-
-	config.Moead.WeightDistribution = 23
-	sim = simulator.NewSimulator(testsuites.LIR3D, 30, config)
+	sim := simulator.NewSimulator(testsuites.LIR2D, 4, config)
 	sim.Simulate()
 
 	config.Moead.WeightDistribution = 101
 	config.MaxFuncEvals = 100_000
 	config.Moead.Cr = 0.9
 	config.Moead.F = 1.0
-	sim = simulator.NewSimulator(testsuites.CEC2020, 30, config)
+	sim = simulator.NewSimulator(testsuites.CEC2020, 4, config)
 	sim.Simulate()
 }
 
@@ -99,12 +94,14 @@ func setupConfigs() configs.Config {
 	}
 
 	sweeperconfig := configs.Sweeper{
-		Sweep: true,
-		Dir:   "results/sweep/",
-		FR:    true,
-		IGD:   true,
-		HV:    true,
-		Phase: true,
+		Sweep:      true,
+		Dir:        "results/sweep/",
+		FR:         true,
+		IGD:        true,
+		HV:         true,
+		ArchiveIGD: true,
+		ArchiveHV:  true,
+		Phase:      true,
 	}
 
 	config := configs.Config{
@@ -112,7 +109,7 @@ func setupConfigs() configs.Config {
 
 		Moead: moeadconfig,
 
-		Stages: []types.StageType{types.Push, types.Pull},
+		Stages: []types.StageType{types.Push, types.BinarySearch, types.Pull},
 
 		Push:   pushconfig,
 		Binary: binaryconfig,
