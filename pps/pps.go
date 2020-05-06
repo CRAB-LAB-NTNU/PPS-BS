@@ -54,6 +54,10 @@ func (pps *PPS) Run() []types.Individual {
 			ParetoFront:          pps.cmop.TrueParetoFront(),
 			HyperVolumeReference: metrics.HVReferenceNadirTimes(pps.HVCoefficient, pps.cmop),
 		}
+		pps.arcResults = metrics.Results{
+			ParetoFront:          pps.cmop.TrueParetoFront(),
+			HyperVolumeReference: metrics.HVReferenceNadirTimes(pps.HVCoefficient, pps.cmop),
+		}
 	}
 
 	for pps.moea.FunctionEvaluations() < pps.moea.MaxFuncEvals() {
