@@ -4,6 +4,10 @@ from Structures import *
 
 PathType = Enum("File", "Directory")
 
+def read_folder_contents(path):
+    contents = os.listdir(path)
+    return [f for f in contents if not f.startswith(".")]
+
 class PathParser:
     def __init__(self, path):
         self.path = path
@@ -32,8 +36,10 @@ class GenerationParser:
         fr = float(vals[2])
         igd = float(vals[3])
         hv = float(vals[4])
+        arcigd = float(vals[5])
+        archv = float(vals[6])
 
-        return Generation(count, phase, fr, igd, hv)
+        return Generation(count, phase, fr, igd, hv, arcigd, archv)
 
 class RunParser(PathParser):
     def __init__(self, path):
@@ -56,27 +62,11 @@ class ProblemParser(PathParser):
         name = self.human_readable("-")
         problem = Problem(name)
 
-        for run_file in os.listdir(self.path):
+        for run_file in read_folder_contents(self.path):
             run_parser = RunParser(self.add_to_path(run_file))
             problem.add(run_parser.parse())
 
         return problem
-
-class ArchiveResultParser(PathParser):
-    def __init__(self, path):
-        PathParser.__init__(self, path)
-        self.storage = {}
-
-    def parse(self):
-        with open(self.path, "r") as mean_value_file:
-            for problem_line in mean_value_file:
-                columns = problem_line.split(" ")
-                name = str(columns[0]).replace("-"," ")
-                fr = float(columns[1])
-                igd = float(columns[2])
-                hv = float(columns[3])
-                self.storage[name] = MeanValues(fr, igd, hv)
-        return self.storage
 
 class TestParser(PathParser):
     def __init__(self, path):
@@ -85,18 +75,10 @@ class TestParser(PathParser):
     def parse(self):
         name = self.human_readable("-")
         test = Test(name)
-        for test_suite_folder in os.listdir(self.path):
+        for test_suite_folder in read_folder_contents(self.path):
             path = self.add_to_path(test_suite_folder)
-            
-            if os.path.isfile(path):
-                if os.path.basename(path) == "mean_values.txt":
-                    archive_results = ArchiveResultParser(path).parse()
-            else:
-                for problem_folder in os.listdir(path):
-                    problem_parser = ProblemParser(self.add_to_path(test_suite_folder, problem_folder))
-                    test.add(problem_parser.parse())
-
-        for problem in test:
-            problem.archive_results = archive_results[problem.name]
+            for problem_folder in read_folder_contents(path):
+                problem_parser = ProblemParser(self.add_to_path(test_suite_folder, problem_folder))
+                test.add(problem_parser.parse())
         
         return test

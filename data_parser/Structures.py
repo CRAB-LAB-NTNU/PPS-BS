@@ -1,3 +1,5 @@
+import statistics
+
 class InnerList:
     def __init__(self):
         self.container = []
@@ -23,19 +25,15 @@ class InnerList:
     def size(self):
         return len(self.container)
 
-class MeanValues:
-    def __init__(self, feasibility_rate, inverted_generational_distance, hyper_volume):
-        self.feasibility_rate = feasibility_rate
-        self.inverted_generational_distance = inverted_generational_distance
-        self.hyper_volume = hyper_volume
-
 class Generation:
-    def __init__(self, count, phase, feasibility_ratio, inverted_generational_distance, hyper_volume):
+    def __init__(self, count, phase, feasibility_ratio, inverted_generational_distance, hyper_volume, archive_inverted_generational_distance, archive_hyper_volume):
         self.count = count
         self.phase = phase
         self.feasibility_ratio = feasibility_ratio
         self.inverted_generational_distance = inverted_generational_distance
         self.hyper_volume = hyper_volume
+        self.archive_inverted_generational_distance = archive_inverted_generational_distance
+        self.archive_hyper_volume = archive_hyper_volume
     
 class Run(InnerList):
     def __init__(self, run):
@@ -50,6 +48,12 @@ class Run(InnerList):
     
     def hyper_volume(self):
         return [generation.hyper_volume for generation in self]
+
+    def archive_hyper_volume(self):
+        return [generation.archive_hyper_volume for generation in self]
+
+    def archive_inverted_generational_distance(self):
+        return [generation.archive_inverted_generational_distance for generation in self]
 
     def binary_count(self):
         return self.phase_count("Binary")
@@ -76,27 +80,73 @@ class Problem(InnerList):
         self.name = name
         self.archive_result = None
         
-    
+    # MEAN
     def mean_inverted_generational_distance(self, generation):
-        return sum([run[generation].inverted_generational_distance for run in self]) / self.size()
+        return statistics.mean([run[generation].inverted_generational_distance for run in self])
 
     def mean_hyper_volume(self, generation):
-        return sum([run[generation].hyper_volume for run in self]) / self.size()
+        return statistics.mean([run[generation].hyper_volume for run in self])
 
     def mean_feasibility_ratio(self, generation):
-        return sum([run[generation].feasibility_ratio for run in self]) / self.size()
+        return statistics.mean([run[generation].feasibility_ratio for run in self])
+
+    def mean_archive_inverted_generational_distance(self, generation):
+        return statistics.mean([run[generation].archive_inverted_generational_distance for run in self])
+
+    def mean_archive_hyper_volume(self, generation):
+        return statistics.mean([run[generation].archive_hyper_volume for run in self])
+
+    #MEDIAN
+    def median_inverted_generational_distance(self, generation):
+        return statistics.median([run[generation].inverted_generational_distance for run in self])
+    
+    def median_hyper_volume(self, generation):
+        return statistics.median([run[generation].hyper_volume for run in self])
+
+    def median_feasibility_ratio(self, generation):
+        return statistics.median([run[generation].feasibility_ratio for run in self])
+    
+    def median_archive_inverted_generational_distance(self, generation):
+        return statistics.median([run[generation].archive_inverted_generational_distance for run in self])
+
+    def median_archive_hyper_volume(self, generation):
+        return statistics.median([run[generation].archive_hyper_volume for run in self])
+    
+    #STD
+    def std_inverted_generational_distance(self, generation):
+        return statistics.stdev([run[generation].inverted_generational_distance for run in self])
+    
+    def std_hyper_volume(self, generation):
+        return statistics.stdev([run[generation].hyper_volume for run in self])
+
+    def std_feasibility_ratio(self, generation):
+        return statistics.stdev([run[generation].feasibility_ratio for run in self])
+
+    def std_archive_inverted_generational_distance(self, generation):
+        return statistics.stdev([run[generation].archive_inverted_generational_distance for run in self])
+
+    def std_archive_hyper_volume(self, generation):
+        return statistics.stdev([run[generation].archive_hyper_volume for run in self])
+
+
 
     def hyper_volume(self):
-        return [self.mean_hyper_volume(i) for i in range(self[0].size())]
+        return [self.median_hyper_volume(i) for i in range(self[0].size())]
     
     def inverted_generational_distance(self):
-        return [self.mean_inverted_generational_distance(i) for i in range(self[0].size())]
+        return [self.median_inverted_generational_distance(i) for i in range(self[0].size())]
 
     def feasibility_ratio(self):
-        return [self.mean_feasibility_ratio(i) for i in range(self[0].size())]    
+        return [self.median_feasibility_ratio(i) for i in range(self[0].size())]
+
+    def archive_inverted_generational_distance(self):
+        return [self.median_archive_inverted_generational_distance(i) for i in range(self[0].size())]
+
+    def archive_hyper_volume(self):
+        return [self.median_archive_hyper_volume(i) for i in range(self[0].size())]
 
     def binary_count(self):
-        return sum([ run.binary_count() for run in self]) / self.size()
+        return sum([run.binary_count() for run in self]) / self.size()
 
     def pull_count(self):
         return sum([run.pull_count() for run in self]) / self.size()

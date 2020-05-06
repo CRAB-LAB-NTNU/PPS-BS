@@ -1,3 +1,5 @@
+#! /usr/local/bin/python3
+
 import Plotter
 import sys, getopt
 
@@ -15,6 +17,7 @@ def main(args):
 
     plotter = Plotter.Multiplotter(paths)
     plotter.plot()
+    plotter.mean_and_std()
 
 if __name__ == "__main__":
     main(sys.argv[1:])
