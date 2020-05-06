@@ -18,7 +18,7 @@ type PPS struct {
 	export                                 configs.Export
 	plotter                                plotter.PpsPlotter
 	sweeper                                sweeper.Sweeper
-	results                                metrics.Results
+	popResults, arcResults                 metrics.Results
 	HVCoefficient                          float64
 }
 
@@ -50,7 +50,11 @@ func (pps *PPS) Run() []types.Individual {
 		pps.setupPlotter()
 	}
 	if pps.sweeper.Sweep() {
-		pps.results = metrics.Results{
+		pps.popResults = metrics.Results{
+			ParetoFront:          pps.cmop.TrueParetoFront(),
+			HyperVolumeReference: metrics.HVReferenceNadirTimes(pps.HVCoefficient, pps.cmop),
+		}
+		pps.arcResults = metrics.Results{
 			ParetoFront:          pps.cmop.TrueParetoFront(),
 			HyperVolumeReference: metrics.HVReferenceNadirTimes(pps.HVCoefficient, pps.cmop),
 		}
@@ -73,8 +77,8 @@ func (pps *PPS) Run() []types.Individual {
 		}
 
 		if pps.sweeper.Sweep() {
-			pps.results.Add(pps.moea.Population())
-
+			pps.popResults.Add(pps.moea.Population())
+			pps.arcResults.Add(pps.moea.Archive())
 			var values []interface{}
 			values = append(values, pps.generation)
 			if pps.sweeper.Phase() {
@@ -84,11 +88,18 @@ func (pps *PPS) Run() []types.Individual {
 				values = append(values, pps.moea.FeasibleRatio())
 			}
 			if pps.sweeper.IGD() {
-				values = append(values, pps.results.IGD.Last())
+				values = append(values, pps.popResults.IGD.Last())
 			}
 			if pps.sweeper.HV() {
-				values = append(values, pps.results.HV.Last())
+				values = append(values, pps.popResults.HV.Last())
 			}
+			if pps.sweeper.ArchiveIGD() {
+				values = append(values, pps.arcResults.IGD.Last())
+			}
+			if pps.sweeper.ArchiveHV() {
+				values = append(values, pps.arcResults.HV.Last())
+			}
+
 			pps.sweeper.WriteLine(values)
 		}
 

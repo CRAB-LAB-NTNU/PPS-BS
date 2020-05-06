@@ -13,6 +13,9 @@ func (metric metricData) size() float64 {
 	return float64(len(metric))
 }
 func (metric metricData) Last() float64 {
+	if len(metric) == 0 {
+		return math.NaN()
+	}
 	return metric[len(metric)-1]
 }
 func (metric metricData) Mean() float64 {
