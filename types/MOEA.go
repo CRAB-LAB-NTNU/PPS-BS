@@ -31,7 +31,6 @@ type MOEA interface {
 	Initialise()
 	FunctionEvaluations() int
 	FeasibleRatio() float64
-	Ideal() []float64
 	Archive() []Individual
 	Evolve(Stage)
 	CHM() CHM
