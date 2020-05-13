@@ -164,15 +164,15 @@ func (s Simulator) setupMoea(cmop types.Cmop, chm types.CHM) types.MOEA {
 func (s Simulator) setupSweeper(cmop types.Cmop, timeStamp string, run int) sweeper.Sweeper {
 	dir := s.Config.Sweeper.Dir + timeStamp + "/" + s.TestSuite.Name + "/" + cmop.Name + "/"
 	var name string
-	nameparts := []string{"Phase-", "FR-", "IGD-", "HV-", "ArcIGD-", "ArcHV-"}
-	trackValues := []bool{s.Config.Sweeper.Phase, s.Config.Sweeper.FR, s.Config.Sweeper.IGD, s.Config.Sweeper.HV, s.Config.Sweeper.ArchiveIGD, s.Config.Sweeper.ArchiveHV}
+	nameparts := []string{"Phase-", "FR-", "CD-", "IGD-", "HV-", "ArcIGD-", "ArcHV-"}
+	trackValues := []bool{s.Config.Sweeper.Phase, s.Config.Sweeper.FR, s.Config.Sweeper.CD, s.Config.Sweeper.IGD, s.Config.Sweeper.HV, s.Config.Sweeper.ArchiveIGD, s.Config.Sweeper.ArchiveHV}
 	for pos, track := range trackValues {
 		if track {
 			name += nameparts[pos]
 		}
 	}
 	name += strconv.Itoa(run)
-	return sweeper.NewSweeper(s.Config.Sweeper.Sweep, dir, name, s.Config.Sweeper.Phase, s.Config.Sweeper.FR, s.Config.Sweeper.IGD, s.Config.Sweeper.HV, s.Config.Sweeper.ArchiveIGD, s.Config.Sweeper.ArchiveHV)
+	return sweeper.NewSweeper(s.Config.Sweeper.Sweep, dir, name, s.Config.Sweeper.Phase, s.Config.Sweeper.FR, s.Config.Sweeper.CD, s.Config.Sweeper.IGD, s.Config.Sweeper.HV, s.Config.Sweeper.ArchiveIGD, s.Config.Sweeper.ArchiveHV)
 }
 
 func (s *Simulator) setupPps(cmop types.Cmop, moea types.MOEA, stages []types.Stage, sweeper sweeper.Sweeper) pps.PPS {

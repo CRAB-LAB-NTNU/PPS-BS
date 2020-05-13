@@ -97,6 +97,7 @@ func setupConfigs() configs.Config {
 		Sweep:      true,
 		Dir:        "results/sweep/",
 		FR:         true,
+		CD:         true,
 		IGD:        true,
 		HV:         true,
 		ArchiveIGD: true,

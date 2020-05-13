@@ -1,6 +1,9 @@
 package pps
 
 import (
+	"math"
+
+	"github.com/CRAB-LAB-NTNU/PPS-BS/biooperators"
 	"github.com/CRAB-LAB-NTNU/PPS-BS/configs"
 	"github.com/CRAB-LAB-NTNU/PPS-BS/metrics"
 	"github.com/CRAB-LAB-NTNU/PPS-BS/plotter"
@@ -86,6 +89,17 @@ func (pps *PPS) Run() []types.Individual {
 			}
 			if pps.sweeper.FR() {
 				values = append(values, pps.moea.FeasibleRatio())
+			}
+			if pps.sweeper.CD() {
+				popdist := biooperators.CrowdingDistance(pps.moea.Population())
+				var s float64
+				for _, val := range popdist {
+					if val == math.MaxFloat64 {
+						continue
+					}
+					s += val
+				}
+				values = append(values, s)
 			}
 			if pps.sweeper.IGD() {
 				values = append(values, pps.popResults.IGD.Last())
