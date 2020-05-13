@@ -138,7 +138,7 @@ var lirCmop5 = types.Cmop{
 		types.EqualsOrGreaterThanZero,
 		types.EqualsOrGreaterThanZero,
 	},
-	Name:                    "5",
+	Name:                    "LIR5",
 	TrueParetoFrontFilename: "paretoFrontData/lir/PF5.dat",
 	DecisionInterval:        arrays.EqualInterval(30, 0, 1),
 	Evaluate: func(x types.Genotype) types.Fitness {
