@@ -7,21 +7,27 @@ import (
 )
 
 type Sweeper struct {
-	sweep                              bool
-	dir                                string
-	name                               string
-	fr, hv, igd, archiveigd, archivehv bool
-	phase                              bool
-	file                               *os.File
+	sweep      bool
+	dir        string
+	name       string
+	fr         bool
+	hv         bool
+	cd         bool
+	igd        bool
+	archiveigd bool
+	archivehv  bool
+	phase      bool
+	file       *os.File
 }
 
-func NewSweeper(sweep bool, dir, name string, phase, fr, igd, hv, archiveigd, archivehv bool) Sweeper {
+func NewSweeper(sweep bool, dir, name string, phase, fr, cd, igd, hv, archiveigd, archivehv bool) Sweeper {
 	return Sweeper{
 		sweep:      sweep,
 		dir:        dir,
 		name:       name,
 		file:       filehandling.OpenFile(dir, name),
 		fr:         fr,
+		cd:         cd,
 		igd:        igd,
 		hv:         hv,
 		archiveigd: archiveigd,
@@ -45,6 +51,9 @@ func (s Sweeper) Phase() bool {
 }
 func (s Sweeper) FR() bool {
 	return s.fr
+}
+func (s Sweeper) CD() bool {
+	return s.cd
 }
 func (s Sweeper) IGD() bool {
 	return s.igd

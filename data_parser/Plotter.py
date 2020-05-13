@@ -33,7 +33,7 @@ class Multiplotter(BasePlotter):
         
 
     def plot_values(self, metric):
-        print("Creating plots for")
+        print("Creating",metric.name,"plots for")
         [print(t.name) for t in self.tests]
         directory = self.base_directory + metric.name + "/"
         create_dir_if_missing(directory)
@@ -90,6 +90,11 @@ class Multiplotter(BasePlotter):
         self.plot_phases()
 
     def mean_and_std(self):
+
+        with open(self.base_directory + "archive_results.csv", 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile, delimiter=',',quotechar='|', quoting=csv.QUOTE_MINIMAL)
+            writer.writerow(["Problem", "Value"] + [test.name for test in self.tests])
+
         for index, problem in enumerate(self.tests[0]):
 
             with open(self.base_directory + "archive_results.csv", 'a', newline='') as csvfile:
