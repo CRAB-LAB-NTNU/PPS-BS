@@ -12,7 +12,7 @@ var cecCmop1 = types.Cmop{
 	ObjectiveCount:          2,
 	DecisionVariables:       25,
 	ConstraintTypes:         []types.ConstraintType{types.EqualsOrLessThanZero, types.EqualsOrLessThanZero, types.EqualsOrLessThanZero},
-	Name:                    "CEC2020-CMOP1",
+	Name:                    "MW5",
 	TrueParetoFrontFilename: "paretoFrontData/cec2020/PF1.dat",
 	DecisionInterval:        arrays.EqualInterval(25, 0, 1),
 	Evaluate: func(x types.Genotype) types.Fitness {
@@ -38,7 +38,7 @@ var cecCmop2 = types.Cmop{
 	ObjectiveCount:          2,
 	DecisionVariables:       25,
 	ConstraintTypes:         []types.ConstraintType{types.EqualsOrLessThanZero},
-	Name:                    "CEC2020-CMOP2",
+	Name:                    "MW6",
 	TrueParetoFrontFilename: "paretoFrontData/cec2020/PF2.dat",
 	DecisionInterval:        arrays.EqualInterval(25, 0, 1.1),
 	Evaluate: func(x types.Genotype) types.Fitness {
@@ -63,7 +63,7 @@ var cecCmop3 = types.Cmop{
 	ObjectiveCount:          2,
 	DecisionVariables:       25,
 	ConstraintTypes:         []types.ConstraintType{types.EqualsOrGreaterThanZero, types.EqualsOrLessThanZero, types.EqualsOrLessThanZero},
-	Name:                    "CEC2020-CMOP3",
+	Name:                    "MW10",
 	TrueParetoFrontFilename: "paretoFrontData/cec2020/PF3.dat",
 	DecisionInterval:        arrays.EqualInterval(25, 0, 1),
 	Evaluate: func(x types.Genotype) types.Fitness {
@@ -88,7 +88,7 @@ var cecCmop4 = types.Cmop{
 	ObjectiveCount:          2,
 	DecisionVariables:       25,
 	ConstraintTypes:         []types.ConstraintType{types.EqualsOrLessThanZero, types.EqualsOrGreaterThanZero},
-	Name:                    "CEC2020-CMOP4",
+	Name:                    "MW13",
 	TrueParetoFrontFilename: "paretoFrontData/cec2020/PF4.dat",
 	DecisionInterval:        arrays.EqualInterval(25, 0, 1.5),
 	Evaluate: func(x types.Genotype) types.Fitness {
@@ -116,7 +116,7 @@ var cecCmop5 = types.Cmop{
 	ObjectiveCount:          2,
 	DecisionVariables:       25,
 	ConstraintTypes:         []types.ConstraintType{types.EqualsOrLessThanZero},
-	Name:                    "CEC2020-CMOP5",
+	Name:                    "MW9",
 	TrueParetoFrontFilename: "paretoFrontData/cec2020/PF5.dat",
 	DecisionInterval:        arrays.EqualInterval(25, 0, 1),
 	Evaluate: func(x types.Genotype) types.Fitness {
@@ -146,7 +146,7 @@ var cecCmop6 = types.Cmop{
 		types.EqualsOrGreaterThanZero,
 		types.EqualsOrLessThanZero,
 	},
-	Name:                    "CEC2020-CMOP6",
+	Name:                    "MW11",
 	TrueParetoFrontFilename: "paretoFrontData/cec2020/PF6.dat",
 	DecisionInterval:        arrays.EqualInterval(25, 0, math.Sqrt(2)),
 	Evaluate: func(x types.Genotype) types.Fitness {

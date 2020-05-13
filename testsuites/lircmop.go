@@ -14,7 +14,7 @@ var lirCmop1 = types.Cmop{
 		types.EqualsOrGreaterThanZero,
 		types.EqualsOrGreaterThanZero,
 	},
-	Name:                    "LIR-CMOP1",
+	Name:                    "LIR1",
 	TrueParetoFrontFilename: "paretoFrontData/lir/PF1.dat",
 	DecisionInterval:        arrays.EqualInterval(30, 0, 1),
 	Evaluate: func(x types.Genotype) types.Fitness {
@@ -44,7 +44,7 @@ var lirCmop2 = types.Cmop{
 		types.EqualsOrGreaterThanZero,
 		types.EqualsOrGreaterThanZero,
 	},
-	Name:                    "LIR-CMOP2",
+	Name:                    "LIR2",
 	TrueParetoFrontFilename: "paretoFrontData/lir/PF2.dat",
 	DecisionInterval:        arrays.EqualInterval(30, 0, 1),
 	Evaluate: func(x types.Genotype) types.Fitness {
@@ -74,7 +74,7 @@ var lirCmop3 = types.Cmop{
 		types.EqualsOrGreaterThanZero,
 		types.EqualsOrGreaterThanZero,
 	},
-	Name:                    "LIR-CMOP3",
+	Name:                    "LIR3",
 	TrueParetoFrontFilename: "paretoFrontData/lir/PF3.dat",
 	DecisionInterval:        arrays.EqualInterval(30, 0, 1),
 	Evaluate: func(x types.Genotype) types.Fitness {
@@ -106,7 +106,7 @@ var lirCmop4 = types.Cmop{
 		types.EqualsOrGreaterThanZero,
 		types.EqualsOrGreaterThanZero,
 	},
-	Name:                    "LIR-CMOP4",
+	Name:                    "LIR4",
 	TrueParetoFrontFilename: "paretoFrontData/lir/PF4.dat",
 	DecisionInterval:        arrays.EqualInterval(30, 0, 1),
 	Evaluate: func(x types.Genotype) types.Fitness {
@@ -138,7 +138,7 @@ var lirCmop5 = types.Cmop{
 		types.EqualsOrGreaterThanZero,
 		types.EqualsOrGreaterThanZero,
 	},
-	Name:                    "LIR-CMOP5",
+	Name:                    "5",
 	TrueParetoFrontFilename: "paretoFrontData/lir/PF5.dat",
 	DecisionInterval:        arrays.EqualInterval(30, 0, 1),
 	Evaluate: func(x types.Genotype) types.Fitness {
@@ -171,7 +171,7 @@ var lirCmop6 = types.Cmop{
 		types.EqualsOrGreaterThanZero,
 		types.EqualsOrGreaterThanZero,
 	},
-	Name:                    "LIR-CMOP6",
+	Name:                    "LIR6",
 	TrueParetoFrontFilename: "paretoFrontData/lir/PF6.dat",
 	DecisionInterval:        arrays.EqualInterval(30, 0, 1),
 	Evaluate: func(x types.Genotype) types.Fitness {
@@ -201,7 +201,7 @@ var lirCmop7 = types.Cmop{
 	ObjectiveCount: 2, ConstraintCount: 3,
 	DecisionVariables:       30,
 	ConstraintTypes:         []types.ConstraintType{types.EqualsOrGreaterThanZero, types.EqualsOrGreaterThanZero, types.EqualsOrGreaterThanZero},
-	Name:                    "LIR-CMOP7",
+	Name:                    "LIR7",
 	TrueParetoFrontFilename: "paretoFrontData/lir/PF7.dat",
 	DecisionInterval:        arrays.EqualInterval(30, 0, 1),
 	Evaluate: func(x types.Genotype) types.Fitness {
@@ -231,7 +231,7 @@ var lirCmop8 = types.Cmop{
 	ObjectiveCount: 2, ConstraintCount: 3,
 	DecisionVariables:       30,
 	ConstraintTypes:         []types.ConstraintType{types.EqualsOrGreaterThanZero, types.EqualsOrGreaterThanZero, types.EqualsOrGreaterThanZero},
-	Name:                    "LIR-CMOP8",
+	Name:                    "LIR8",
 	TrueParetoFrontFilename: "paretoFrontData/lir/PF8.dat",
 	DecisionInterval:        arrays.EqualInterval(30, 0, 1),
 	Evaluate: func(x types.Genotype) types.Fitness {
@@ -257,7 +257,7 @@ var lirCmop9 = types.Cmop{
 	ObjectiveCount: 2, ConstraintCount: 2,
 	DecisionVariables:       30,
 	ConstraintTypes:         []types.ConstraintType{types.EqualsOrGreaterThanZero, types.EqualsOrGreaterThanZero},
-	Name:                    "LIR-CMOP9",
+	Name:                    "LIR9",
 	TrueParetoFrontFilename: "paretoFrontData/lir/PF9.dat",
 	DecisionInterval:        arrays.EqualInterval(30, 0, 1),
 	Evaluate: func(x types.Genotype) types.Fitness {
@@ -282,7 +282,7 @@ var lirCmop10 = types.Cmop{
 	ObjectiveCount: 2, ConstraintCount: 2,
 	DecisionVariables:       30,
 	ConstraintTypes:         []types.ConstraintType{types.EqualsOrGreaterThanZero, types.EqualsOrGreaterThanZero},
-	Name:                    "LIR-CMOP10",
+	Name:                    "LIR10",
 	TrueParetoFrontFilename: "paretoFrontData/lir/PF10.dat",
 	DecisionInterval:        arrays.EqualInterval(30, 0, 1),
 	Evaluate: func(x types.Genotype) types.Fitness {
@@ -307,7 +307,7 @@ var lirCmop11 = types.Cmop{
 	ObjectiveCount: 2, ConstraintCount: 2,
 	DecisionVariables:       30,
 	ConstraintTypes:         []types.ConstraintType{types.EqualsOrGreaterThanZero, types.EqualsOrGreaterThanZero},
-	Name:                    "LIR-CMOP11",
+	Name:                    "LIR11",
 	TrueParetoFrontFilename: "paretoFrontData/lir/PF11.dat",
 	DecisionInterval:        arrays.EqualInterval(30, 0, 1),
 	Evaluate: func(x types.Genotype) types.Fitness {
@@ -332,7 +332,7 @@ var lirCmop12 = types.Cmop{
 	ObjectiveCount: 2, ConstraintCount: 2,
 	DecisionVariables:       30,
 	ConstraintTypes:         []types.ConstraintType{types.EqualsOrGreaterThanZero, types.EqualsOrGreaterThanZero},
-	Name:                    "LIR-CMOP12",
+	Name:                    "LIR12",
 	TrueParetoFrontFilename: "paretoFrontData/lir/PF12.dat",
 	DecisionInterval:        arrays.EqualInterval(30, 0, 1),
 	Evaluate: func(x types.Genotype) types.Fitness {
@@ -357,7 +357,7 @@ var lirCmop13 = types.Cmop{
 	ObjectiveCount: 3, ConstraintCount: 2,
 	ConstraintTypes:         []types.ConstraintType{types.EqualsOrGreaterThanZero, types.EqualsOrGreaterThanZero},
 	DecisionVariables:       30,
-	Name:                    "LIR-CMOP13",
+	Name:                    "LIR13",
 	TrueParetoFrontFilename: "paretoFrontData/lir/PF13.dat",
 	DecisionInterval:        arrays.EqualInterval(30, 0, 1),
 	Evaluate: func(x types.Genotype) types.Fitness {
@@ -378,7 +378,7 @@ var lirCmop14 = types.Cmop{
 	ObjectiveCount: 3, ConstraintCount: 3,
 	ConstraintTypes:         []types.ConstraintType{types.EqualsOrGreaterThanZero, types.EqualsOrGreaterThanZero, types.EqualsOrGreaterThanZero},
 	DecisionVariables:       30,
-	Name:                    "LIR-CMOP14",
+	Name:                    "LIR14",
 	TrueParetoFrontFilename: "paretoFrontData/lir/PF14.dat",
 	DecisionInterval:        arrays.EqualInterval(30, 0, 1),
 	Evaluate: func(x types.Genotype) types.Fitness {
