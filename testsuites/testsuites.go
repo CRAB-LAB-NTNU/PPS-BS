@@ -13,7 +13,7 @@ var CEC2020 = types.TestSuite{
 		cecCmop6,
 	},
 	NumberOfProblems: 6,
-	Name:             "CEC2020",
+	Name:             "MW",
 }
 
 // LIR2D contains the LIR-CMOP1-12 two objective problems.
@@ -33,7 +33,7 @@ var LIR2D = types.TestSuite{
 		lirCmop12,
 	},
 	NumberOfProblems: 12,
-	Name:             "Lir2D",
+	Name:             "LIR2D",
 }
 
 // LIR3D contains the LIR-CMOP13-14 three objective problems.
@@ -43,5 +43,5 @@ var LIR3D = types.TestSuite{
 		lirCmop14,
 	},
 	NumberOfProblems: 2,
-	Name:             "Lir3D",
+	Name:             "LIR3D",
 }
